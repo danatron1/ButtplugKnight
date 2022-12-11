@@ -3,7 +3,7 @@
     <!-- Change this to the path of your modded HK installation -->
     <HollowKnightRefs>E:\Program Files (x86)\Steam\SteamApps\common\Hollow Knight\hollow_knight_Data\Managed</HollowKnightRefs>
     <!-- Change this to the path where you want the ready-to-upload exports to be -->
-    <ExportDir>E:/Github_Projects/__Exports/</ExportDir>
+    <ExportDir>C:\Users\Danatron1\source\repos\ButtplugKnight</ExportDir>
     <!-- Uncomment this to generate a documentation file to be included with the mod -->
     <!--<DocumentationFile>$(OutputPath)/$(AssemblyTitle).xml</DocumentationFile>-->
   </PropertyGroup>
