@@ -12,6 +12,16 @@ You will need:
 
 If you have a bluetooth dongle but are unsure if it's compatible, install Intiface Central and scan for devices. If it can find your vibrator, it should work.
 
+## To install
+
+Install Intiface Central using the above link.
+
+Drag the "ButtplugKnight" folder from this repo into your Mods folder. The path should look similar to this;
+
+`E:\Program Files (x86)\Steam\SteamApps\common\Hollow Knight\hollow_knight_Data\Managed\Mods`
+
+You only need `Buttplug.dll` and `ButtplugKnight.dll` in order for this to work. I can't believe this is what I'm doing with my life. 
+
 ## Rules
 
 When you take damage, it will buzz at 50% power for 5 seconds. (Double damage hits are 100% power for 10 seconds)
