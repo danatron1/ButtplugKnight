@@ -74,11 +74,13 @@ namespace GoodVibes
             if (Client == null)
             {
                 Log($"Tried to update power level, but Client was null");
+                if (!_triedToInitialize) Initialize();
                 return;
             }
             if (!Client.Connected)
             {
                 Log($"Tried to update power level, but Client was disconnected");
+                if (!_triedToInitialize) Initialize();
                 return;
             }
             foreach (var plug in Client?.Devices)
@@ -119,9 +121,10 @@ namespace GoodVibes
                 return false;
             }
         }
-
+        internal bool _triedToInitialize = false;
         public async Task<bool> Initialize() 
         {
+            _triedToInitialize = true;
             _connector = new ButtplugWebsocketConnectorOptions(new Uri($"ws://localhost:{Port}/buttplug"));
             SetupClient();
 

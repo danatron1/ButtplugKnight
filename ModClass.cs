@@ -15,13 +15,12 @@ namespace ButtplugMod
 
         string logPath = $"{Environment.CurrentDirectory}\\VibeLog.txt";
         int secondsPerHit = 5;
-        bool hitRecently = false;
         int port = 12345;
         int retryAttempts = 10;
 
         bool vibing => timeToReset > 0;
         float currentPower = 0;
-        float timeToReset = 0;
+        float timeToReset = 2;
 
         PlugManager plug;
 
