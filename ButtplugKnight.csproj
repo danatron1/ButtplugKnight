@@ -4,13 +4,14 @@
     <HollowKnightRefs>E:\Program Files (x86)\Steam\SteamApps\common\Hollow Knight\hollow_knight_Data\Managed</HollowKnightRefs>
     <!-- Change this to the path where you want the ready-to-upload exports to be -->
     <ExportDir>C:\Users\Danatron1\source\repos\ButtplugKnight</ExportDir>
+    <Platforms>AnyCPU;x64</Platforms>
     <!-- Uncomment this to generate a documentation file to be included with the mod -->
     <!--<DocumentationFile>$(OutputPath)/$(AssemblyTitle).xml</DocumentationFile>-->
   </PropertyGroup>
   <PropertyGroup>
     <RootNamespace>ButtplugKnight</RootNamespace>
     <AssemblyName>ButtplugKnight</AssemblyName>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <AssemblyTitle>ButtplugKnight</AssemblyTitle>
     <Product>ButtplugKnight</Product>
     <Description>Vibes you when you take damage</Description>
@@ -31,6 +32,9 @@
     <Copy Condition="'$(DocumentationFile)' == ''" SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/" />
 
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ExportDir)/$(TargetName)/" />
+    <Copy SourceFiles="$(ExportDir)\bin\Debug\$(TargetFramework)\Buttplug.dll" DestinationFolder="$(ExportDir)/$(TargetName)/" />
+    <Copy SourceFiles="$(ExportDir)\bin\Debug\$(TargetFramework)\ButtplugManaged.dll" DestinationFolder="$(ExportDir)/$(TargetName)/" />
+    <Copy SourceFiles="$(ExportDir)\bin\Debug\$(TargetFramework)\websocket-sharp.dll" DestinationFolder="$(ExportDir)/$(TargetName)/" />
     
     <Copy Condition="'$(DocumentationFile)' != ''" SourceFiles="ReadMe.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb;$(TargetDir)/$(TargetName).xml" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
     <Copy Condition="'$(DocumentationFile)' == ''" SourceFiles="ReadMe.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
@@ -56,8 +60,14 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>E:\Program Files (x86)\Steam\SteamApps\common\Hollow Knight\hollow_knight_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Buttplug">
+      <HintPath>$(HollowKnightRefs)/Mods/$(TargetName)/Buttplug.dll</HintPath>
+    </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>$(HollowKnightRefs)/Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="ButtplugManaged">
+      <HintPath>..\ButtplugIOMain\ManagedButtplugIo-main\ButtplugCSharp\bin\Debug\net48\ButtplugManaged.dll</HintPath>
     </Reference>
     <Reference Include="ConditionalExpression">
       <HintPath>E:\Program Files (x86)\Steam\SteamApps\common\Hollow Knight\hollow_knight_Data\Managed\ConditionalExpression.dll</HintPath>
@@ -90,7 +100,7 @@
       <HintPath>$(HollowKnightRefs)/netstandard.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>$(HollowKnightRefs)/Newtonsoft.Json.dll</HintPath>
+      <HintPath>E:\Program Files (x86)\Steam\SteamApps\common\Hollow Knight\hollow_knight_Data\Managed/Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="PlayMaker">
       <HintPath>$(HollowKnightRefs)/PlayMaker.dll</HintPath>
@@ -269,6 +279,9 @@
     <Reference Include="UnityEngine.UIElementsModule">
       <HintPath>$(HollowKnightRefs)/UnityEngine.UIElementsModule.dll</HintPath>
     </Reference>
+    <Reference Include="websocket-sharp">
+      <HintPath>..\ButtplugIOMain\ManagedButtplugIo-main\ButtplugCSharp\bin\Debug\net48\websocket-sharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -277,5 +290,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Buttplug" Version="2.0.6" />
+    <PackageReference Include="ButtplugRustFFI" Version="2.0.5" />
   </ItemGroup>
 </Project>

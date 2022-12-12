@@ -1,4 +1,5 @@
-﻿using Buttplug;
+﻿//using Buttplug;
+using ButtplugManaged;
 using System;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -119,7 +120,7 @@ namespace GoodVibes
             }
         }
 
-        public async Task<bool> Initialize()
+        public async Task<bool> Initialize() 
         {
             _connector = new ButtplugWebsocketConnectorOptions(new Uri($"ws://localhost:{Port}/buttplug"));
             SetupClient();

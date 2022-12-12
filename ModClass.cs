@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
-using UObject = UnityEngine.Object;
 
 namespace ButtplugMod
 {
@@ -32,8 +31,8 @@ namespace ButtplugMod
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             Log("Initializing");
-            Instance = this;
-            Log("Initialized");
+            Instance = this; 
+            Log("Initialized"); 
             ModHooks.HeroUpdateHook += OnHeroUpdate;
             ModHooks.BeforeAddHealthHook += BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook += OnHeroDamaged;
@@ -49,7 +48,7 @@ namespace ButtplugMod
             return arg;
         }
 
-        void PlugSetup()
+        async void PlugSetup()
         {
             try
             {
@@ -59,7 +58,7 @@ namespace ButtplugMod
                     RetryAmount = retryAttempts
                 };
                 plug.LogMessage += LogVibe;
-                plug.Initialize();
+                await plug.Initialize();
                 Log($"Plug initialized, logging to {logPath}");
             }
             catch (Exception e)
