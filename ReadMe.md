@@ -21,6 +21,8 @@ DETAILED VERSION:
 
 Install Intiface Central using the above link. You'll know it's working if you can turn on the server, go to devices, scan for devices, and see your device listed. The port should be set to the default `12345`, so it reads `Server Address: localhost:12345`.
 
+* Alternatively; if the above isn't working, if you're using a Lovense brand toy, 'try using "Lovense Connect". Make sure Lovense Connect is enabled in the Intiface settings (off by default), and it should be able to see your phone as a bluetooth device, and connect to your toy through that. This is recommended if you're moving around a lot, or you're having trouble connecting.
+
 Install Hollow Knight if you haven't already. Install Scarab by downloading the file and running it - couldn't be easier to use. You may need to install a small mod through its UI just to get it to do its thing. I use Toggleable Bindings for this. You'll know it's working if your game has the spaghetti icon on the main menu and the mod list in the top left.
 
 Drag the "ButtplugKnight" folder from this repo into your Mods folder. The path should look similar to this;
