@@ -6,7 +6,7 @@ For when you want to feel a little less hollow.
 
 You will need:
 * A vibrating toy (only tested with Lovense, should work with [many more](https://iostindex.com/?filter0ButtplugSupport=7))
-* A bluetooth 5.0 dongle for your PC (not required if toy is wired to PC)
+* A bluetooth dongle for your PC (Bluetooth 4.0 [recommended](https://how.do.i.get.buttplug.in/hardware/bluetooth.html#can-i-use-a-bluetooth-5-dongle))
 * A copy of [Hollow Knight](https://store.steampowered.com/app/367520/Hollow_Knight/)
 * [Scarab](https://github.com/fifty-six/Scarab/releases), Hollow Knight's mod manager
 * [Intiface Central](https://intiface.com/central/) installed and enabled
