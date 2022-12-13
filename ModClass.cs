@@ -187,9 +187,9 @@ namespace ButtplugMod
                     },
                     Saver = opt => baseVibeRate = opt switch {
                         0 => 0.1f,
-                        1 => 0.20f,
-                        2 => 0.20f,
-                        3 => 0.20f,
+                        1 => 0.2f,
+                        2 => 0.3f,
+                        3 => 0.4f,
                         4 => 0.5f,
                         5 => 0.75f,
                         6 => 1f,
@@ -220,7 +220,7 @@ namespace ButtplugMod
                         "20",
                         "69"
                     },
-                    Saver = opt => baseVibeRate = opt switch {
+                    Saver = opt => secondsPerHit = opt switch {
                         0 => 1,
                         1 => 2,
                         2 => 3,
@@ -232,7 +232,7 @@ namespace ButtplugMod
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     },
-                    Loader = () => baseVibeRate switch {
+                    Loader = () => secondsPerHit switch {
                         1 => 0,
                         2 => 1,
                         3 => 2,
@@ -248,6 +248,7 @@ namespace ButtplugMod
         }
         public void Unload()
         {
+            plug?.SetPowerLevel(0);
             ModHooks.HeroUpdateHook -= OnHeroUpdate;
             ModHooks.BeforeAddHealthHook -= BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook -= OnHeroDamaged;
