@@ -97,7 +97,13 @@ namespace ButtplugMod
             if (vibing && doubleOnOverlap) amount *= 2;
             currentPower = Mathf.Max(Mathf.Min(baseVibeRate * amount, 1), currentPower);
             float seconds = secondsPerHit * amount;
-            LogVibe($"Took {amount} damage, vibing at intensity {currentPower} for {seconds} seconds");
+            if (amount > 60)
+            {
+                LogVibe($"Oof, radiant death. That'd normally be {seconds} seconds. Lowering that to 1 minute.");
+                seconds = 60;
+            }
+            if (amount is < 1 and > 0) LogVibe($"Healed. vibing at intensity {currentPower} for {seconds} seconds");
+            LogVibe($"Took {amount} damage{amount}, vibing at intensity {currentPower} for {seconds} seconds");
             timeToReset += seconds;
             plug?.SetPowerLevel(currentPower);
         }
@@ -170,27 +176,33 @@ namespace ButtplugMod
                     Description = "The vibration level from 1 damage (50% recommended)",
                     Values = new string[] {
                         "10%",
-                        "25%",
+                        "20%",
+                        "30%",
+                        "40%",
                         "50%",
                         "75%",
                         "100%"
                     },
                     Saver = opt => baseVibeRate = opt switch {
                         0 => 0.1f,
-                        1 => 0.25f,
-                        2 => 0.5f,
-                        3 => 0.75f,
-                        4 => 1f,
+                        1 => 0.20f,
+                        2 => 0.20f,
+                        3 => 0.20f,
+                        4 => 0.5f,
+                        5 => 0.75f,
+                        6 => 1f,
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     },
                     Loader = () => baseVibeRate switch {
                         0.1f => 0,
-                        0.25f => 1,
-                        0.5f => 2,
-                        0.75f => 3,
-                        1f => 4,
-                        _ => 2
+                        0.2f => 1,
+                        0.3f => 2,
+                        0.4f => 3,
+                        0.5f => 4,
+                        0.75f => 5,
+                        1f => 6,
+                        _ => 4
                     } 
                 }, //Intensity
                 new IMenuMod.MenuEntry {
