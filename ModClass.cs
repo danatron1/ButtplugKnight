@@ -105,7 +105,7 @@ namespace ButtplugMod
             }
             float seconds = secondsPerHit * amount;
             if (amount is < 1 and > 0) LogVibe($"Healed. vibing at intensity {currentPower} for {seconds} seconds");
-            else LogVibe($"Took {amount} damage{amount}, vibing at intensity {currentPower} for {seconds} seconds");
+            else LogVibe($"Took {amount} damage, vibing at intensity {currentPower} for {seconds} seconds");
             timeToReset += seconds;
             plug?.SetPowerLevel(currentPower);
         }
