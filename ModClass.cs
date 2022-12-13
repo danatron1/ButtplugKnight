@@ -94,16 +94,18 @@ namespace ButtplugMod
         private void DoGoodVibes(float amount)
         {
             if (!scaleWithDamage && amount > 1) amount = 1;
+            currentPower = (doubleOnOverlap ? currentPower : 0) + baseVibeRate * amount;
+            if (currentPower > 1) currentPower = 1;
             if (vibing && doubleOnOverlap) amount *= 2;
             currentPower = Mathf.Max(Mathf.Min(baseVibeRate * amount, 1), currentPower);
-            float seconds = secondsPerHit * amount;
-            if (amount > 60)
+            if (amount > 10)
             {
-                LogVibe($"Oof, radiant death. That'd normally be {seconds} seconds. Lowering that to 1 minute.");
-                seconds = 60;
+                LogVibe($"Oof, radiant death? That'd normally be {secondsPerHit * amount} seconds. Lowering that a bit.");
+                amount = 10;
             }
+            float seconds = secondsPerHit * amount;
             if (amount is < 1 and > 0) LogVibe($"Healed. vibing at intensity {currentPower} for {seconds} seconds");
-            LogVibe($"Took {amount} damage{amount}, vibing at intensity {currentPower} for {seconds} seconds");
+            else LogVibe($"Took {amount} damage{amount}, vibing at intensity {currentPower} for {seconds} seconds");
             timeToReset += seconds;
             plug?.SetPowerLevel(currentPower);
         }
