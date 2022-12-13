@@ -6,10 +6,10 @@ For when you want to feel a little less hollow.
 
 You will need:
 * A vibrating toy (only tested with Lovense, should work with [many more](https://iostindex.com/?filter0ButtplugSupport=7))
-* A bluetooth dongle for your PC (Bluetooth 4.0 [recommended](https://how.do.i.get.buttplug.in/hardware/bluetooth.html#can-i-use-a-bluetooth-5-dongle))
+* (Optional with Lovense) A bluetooth dongle for your PC (Bluetooth 4.0 [recommended](https://how.do.i.get.buttplug.in/hardware/bluetooth.html#can-i-use-a-bluetooth-5-dongle))
 * A copy of [Hollow Knight](https://store.steampowered.com/app/367520/Hollow_Knight/)
 * Hollow Knight's mod manager, [Scarab](https://github.com/fifty-six/Scarab/releases).
-* [Intiface Central](https://intiface.com/central/) installed and enabled
+* [Intiface Central](https://intiface.com/central/) installed and enabled.
 
 If you have a bluetooth dongle but are unsure if it's compatible, install Intiface Central and scan for devices. If it can find your vibrator, it should work.
 
@@ -21,7 +21,7 @@ DETAILED VERSION:
 
 Install Intiface Central using the above link. You'll know it's working if you can turn on the server, go to devices, scan for devices, and see your device listed. The port should be set to the default `12345`, so it reads `Server Address: localhost:12345`.
 
-* Alternatively; if the above isn't working, if you're using a Lovense brand toy, 'try using "Lovense Connect". Make sure Lovense Connect is enabled in the Intiface settings (it's off by default), and it should be able to see your phone as a bluetooth device, and connect to your toy through that. This is recommended if you're moving around a lot, or you're having trouble connecting.
+* Alternatively; If you're using a Lovense, 'try using "Lovense Connect". Make sure Lovense Connect is enabled in the Intiface settings (it's off by default), and connect to your toy through that. This is recommended if you're moving around a lot, having trouble connecting, or don't own a Bluetooth Dongle.
 
 Install Hollow Knight if you haven't already. Install Scarab by downloading the file and running it - couldn't be easier to use. You may need to install a small mod through its UI just to get it to do its thing. I use Toggleable Bindings for this. You'll know it's working if your game has the spaghetti icon on the main menu and the mod list in the top left.
 
@@ -30,6 +30,8 @@ Drag the "ButtplugKnight" folder from this repo into your Mods folder. The path 
 `\Program Files (x86)\Steam\SteamApps\common\Hollow Knight\hollow_knight_Data\Managed\Mods`
 
 You need the 4 dll files; `Buttplug.dll`, `ButtplugKnight.dll`, `ButtplugManaged.dll`, and `websocket-sharp.dll` in order for this to work. If done correctly, you should be able to go into settings > mods > check that it's enabled. 
+
+If you have any issues installing, feel free to contact me for help. Ensure the mod is enabled. It should generate a `VibeLog.txt` log file in the mod folder. The game also generates a `ModLog.txt` at `AppData\LocalLow\Team Cherry\Hollow Knight`.
 
 ## Rules
 
