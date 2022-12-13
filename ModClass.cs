@@ -22,7 +22,7 @@ namespace ButtplugMod
         private bool buzzOnHeal = true;
         private bool scaleWithDamage = true;
 
-        string logPath = $"{Environment.CurrentDirectory}\\VibeLog.txt";
+        string logPath = $@"{Environment.CurrentDirectory}\hollow_knight_Data\Managed\Mods\ButtplugKnight\VibeLog.txt";
 
         bool vibing => timeToReset > 0;
 
