@@ -32,7 +32,7 @@ namespace ButtplugMod
         PlugManager plug;
 
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "v1.1";
+        public override string GetVersion() => "v1.1.2";
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
