@@ -24,6 +24,7 @@ namespace ButtplugMod
         private bool scaleWithDamage = true;
         private bool randomSurprises = true;
         private bool punctuateHits = false;
+        private bool vulnerableWhileVibing = false;
 
         string logPath = $@"{Environment.CurrentDirectory}\hollow_knight_Data\Managed\Mods\ButtplugKnight\VibeLog.txt";
 
@@ -36,7 +37,7 @@ namespace ButtplugMod
         PlugManager plug;
 
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "v1.2";
+        public override string GetVersion() => "v1.2.1";
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
@@ -110,28 +111,40 @@ namespace ButtplugMod
             else DoGoodVibes(damageAmount);
             if (punctuateHits)
             {
-                plug?.SetPowerLevel(1);
+                if (currentPower < 1) plug?.SetPowerLevel(1);
                 punctuateTimer = 1;
                 Log("Hit punctuated by 1 second of max power.");
             }
+            if (vulnerableWhileVibing && vibing) damageAmount *= 2; 
             return damageAmount;
         }
         private void DoGoodVibes(float amount)
         {
-            if (!scaleWithDamage && amount > 1) amount = 1;
-            currentPower = (doubleOnOverlap ? currentPower : 0) + baseVibeRate * amount;
-            if (currentPower > 1) currentPower = 1;
-            if (vibing && doubleOnOverlap) amount *= 2;
-            currentPower = Mathf.Max(Mathf.Min(baseVibeRate * amount, 1), currentPower);
+            if (!scaleWithDamage && amount > 1) amount = 1; //cap to 1 if we're not scaling with damage
+            //calculate new power level
+            float newPower = baseVibeRate * amount;
+            if (doubleOnOverlap) newPower += currentPower;
+            else if (newPower < currentPower) newPower = currentPower;
+            newPower = Mathf.Clamp01(newPower);
+            //apply doubling after (since vibration is additive it's already accounted for)
+            string message = amount is < 1 and > 0 ? "Healed" : $"Took {amount} damage"; //just for log message
+            if (vibing && doubleOnOverlap)
+            {
+                message = "(DOUBLED) " + message;
+                amount *= 2;
+            }
             if (amount > 10)
             {
+                //by default, dying in radiant mode triggers the game to deal 9999 damage to you
+                //this equates to almost 14 hours of vibe at default settings. I think it's fair to lower it.
                 LogVibe($"Oof, radiant death? That'd normally be {secondsPerHit * amount} seconds. Lowering that a bit.");
                 amount = 10;
             }
             float seconds = secondsPerHit * amount;
-            if (amount is < 1 and > 0) LogVibe($"Healed. vibing at intensity {currentPower} for {seconds} seconds");
-            else LogVibe($"Took {amount} damage, vibing at intensity {currentPower} for {seconds} seconds");
+            LogVibe($"{message}. vibing at intensity {newPower} for {seconds} seconds");
             timeToReset += seconds;
+            if (currentPower == newPower) return;
+            currentPower = newPower;
             if (!punctuateHits) plug?.SetPowerLevel(currentPower);
         }
         public void LogVibe(string s) 
@@ -304,7 +317,26 @@ namespace ButtplugMod
                         true => 0,
                         false => 1,
                     }
-                } //punctuate hits
+                }, //punctuate hits
+                //max line length |----------------------------------------------------------------|
+                new IMenuMod.MenuEntry {
+                    Name = "Vulnerable vibing",
+                    Description = "While vibing, the knight takes double damage.",
+                    Values = new string[] {
+                        "On",
+                        "Off"
+                    },
+                    Saver = opt => vulnerableWhileVibing = opt switch {
+                        0 => true,
+                        1 => false,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    },
+                    Loader = () => vulnerableWhileVibing switch {
+                        true => 0,
+                        false => 1,
+                    }
+                } //Vulnerable when vibing
             };
         }
         public void Unload()

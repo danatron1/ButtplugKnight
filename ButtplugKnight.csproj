@@ -25,7 +25,7 @@
   <Target Name="CopyMod" AfterTargets="PostBuildEvent">
     <RemoveDir Condition="Exists('$(ExportDir)/$(TargetName)/')" Directories="$(ExportDir)/$(TargetName)/" />
     <MakeDir Directories="$(ExportDir)/$(TargetName)/" />
-    <!--<MakeDir Directories="$(ExportDir)/$(TargetName)/zip/" />-->
+    <MakeDir Directories="$(ExportDir)/$(TargetName)/zip/" />
     <MakeDir Condition="!Exists('$(HollowKnightRefs)/Mods/$(TargetName)/')" Directories="$(HollowKnightRefs)/Mods/$(TargetName)/" />
 <!--
     <Copy Condition="'$(DocumentationFile)' != ''" SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb;$(TargetDir)/$(TargetName).xml" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/" />
@@ -41,11 +41,15 @@
     <Copy SourceFiles="$(ExportDir)/$(TargetName)/ButtplugManaged.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/" />
     <Copy SourceFiles="$(ExportDir)/$(TargetName)/websocket-sharp.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/" />
     
+    <Copy SourceFiles="$(ExportDir)/$(TargetName)/$(TargetName).dll" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
+    <Copy SourceFiles="$(ExportDir)/$(TargetName)/ButtplugManaged.dll" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
+    <Copy SourceFiles="$(ExportDir)/$(TargetName)/websocket-sharp.dll" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
+    
     <Copy Condition="'$(DocumentationFile)' != ''" SourceFiles="ReadMe.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb;$(TargetDir)/$(TargetName).xml" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
     <Copy Condition="'$(DocumentationFile)' == ''" SourceFiles="ReadMe.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
     
-    <!--<ZipDirectory SourceDirectory="$(ExportDir)/$(TargetName)/zip/" DestinationFile="$(ExportDir)/$(TargetName)/$(TargetName).zip" />-->
-    <!--<RemoveDir Directories="$(ExportDir)/$(TargetName)/zip/" />-->
+    <ZipDirectory SourceDirectory="$(ExportDir)/$(TargetName)/zip/" DestinationFile="$(ExportDir)/$(TargetName)/$(TargetName).zip" />
+    <RemoveDir Directories="$(ExportDir)/$(TargetName)/zip/" />
 
     <!--
     Uncomment this block to generate a SHA.txt hash file

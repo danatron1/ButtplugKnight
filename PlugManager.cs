@@ -172,7 +172,7 @@ namespace GoodVibes
         public void SetPowerLevel(float level)
         {
             //if (level == _currentPower) return;
-            _currentPower = Mathf.Clamp(level, 0, 1);
+            _currentPower = Mathf.Clamp01(level);
             Task.Factory.StartNew(() => UpdatePowerLevels().FireAndForget(LogMessage));
         }
     }
