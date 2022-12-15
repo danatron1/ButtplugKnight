@@ -5,11 +5,11 @@ For when you want to feel a little less hollow.
 ## Requirements
 
 You will need:
-* A vibrating toy (only tested with Lovense, should work with [many more](https://iostindex.com/?filter0ButtplugSupport=7))
-* (Optional with Lovense) A bluetooth dongle for your PC (Bluetooth 4.0 [recommended](https://how.do.i.get.buttplug.in/hardware/bluetooth.html#can-i-use-a-bluetooth-5-dongle))
-* A copy of [Hollow Knight](https://store.steampowered.com/app/367520/Hollow_Knight/)
-* Hollow Knight's mod manager, [Scarab](https://github.com/fifty-six/Scarab/releases).
-* [Intiface Central](https://intiface.com/central/) installed and enabled.
+* A vibrating toy. (only tested with Lovense, should work with [many more](https://iostindex.com/?filter0ButtplugSupport=7))
+* (Optional with Lovense) A bluetooth dongle for your PC. (Bluetooth 4.0 [recommended](https://how.do.i.get.buttplug.in/hardware/bluetooth.html#can-i-use-a-bluetooth-5-dongle))
+* A copy of [Hollow Knight](https://store.steampowered.com/app/367520/Hollow_Knight/).
+* Hollow Knight's mod manager, [Scarab](https://github.com/fifty-six/Scarab/releases). (free)
+* [Intiface Central](https://intiface.com/central/) installed and enabled. (free)
 
 If you have a bluetooth dongle but are unsure if it's compatible, install Intiface Central and scan for devices. If it can find your vibrator, it should work.
 
@@ -19,7 +19,7 @@ SHORT VERSION: Install intiface central, hollow knight, and scarab. Enable intif
 
 DETAILED VERSION:
 
-Install Intiface Central using the above link. You'll know it's working if you can turn on the server, go to devices, scan for devices, and see your device listed. The port should be set to the default `12345`, so it reads `Server Address: localhost:12345`.
+Install Intiface Central using the above link. Turn on the server, go to devices, scan for devices, and see your device listed. The port should be set to the default `12345`, so it reads `Server Address: localhost:12345`.
 
 * Alternatively; If you're using a Lovense, 'try using "Lovense Connect". Make sure Lovense Connect is enabled in the Intiface settings (it's off by default), and connect to your toy through that. This is recommended if you're moving around a lot, having trouble connecting, or don't own a Bluetooth Dongle.
 
@@ -41,6 +41,6 @@ When you heal, it will buzz at 10% power for 1 second.
 
 If one of the above triggers while it is still vibrating, the effect and duration will be **doubled**. This means that if you take a regular hit, then take another before the 5 seconds are up, you will have an additional 10 seconds at 100% power. 
 
-This can be customised in the mod, but I do recommend starting with the default settings. It's better for the default to be 50% rather than 100%, as that leaves room for it to get more intense should you take a heavy hit or multiple hits back to back.
+This can be customised in the mod, but I do recommend starting with the default settings. It's better for the default to be 50% rather than 100%, as that leaves room for it to get more intense should you take a heavy hit or multiple hits back to back. There's many customisation options in the mod, explore them for yourself!
 
 What am I doing with my life.
