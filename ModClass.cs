@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace ButtplugMod
 {
@@ -21,6 +22,8 @@ namespace ButtplugMod
         private bool doubleOnOverlap = true;
         private bool buzzOnHeal = true;
         private bool scaleWithDamage = true;
+        private bool randomSurprises = true;
+        private bool punctuateHits = false;
 
         string logPath = $@"{Environment.CurrentDirectory}\hollow_knight_Data\Managed\Mods\ButtplugKnight\VibeLog.txt";
 
@@ -28,6 +31,7 @@ namespace ButtplugMod
 
         float currentPower = 0;
         float timeToReset = 2;
+        float punctuateTimer = 0;
 
         PlugManager plug;
 
@@ -43,7 +47,7 @@ namespace ButtplugMod
             ModHooks.BeforeAddHealthHook += BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook += OnHeroDamaged;
 
-            if (!File.Exists(logPath)) File.Create(logPath);
+            if (!File.Exists(logPath)) File.Create(logPath).Close();
             else if (plug == null) File.WriteAllLines(logPath, new string[0]);
 
             if (plug == null) PlugSetup();
@@ -73,9 +77,24 @@ namespace ButtplugMod
                 Log($"Failed to initialize vibrator - {e.GetType()}: {e.Message}");
             }
         }
+        static System.Random rng = new System.Random();
         private void OnHeroUpdate()
         {
-            if (vibing)
+            if (randomSurprises && rng.Next(1, 1_000_000) == 69)
+            {
+                timeToReset += 10;
+                plug?.SetPowerLevel(1);
+                Log("Random surprise triggered! Enjoy 10 seconds of max power :)");
+            }
+            if (punctuateHits && punctuateTimer > 0)
+            {
+                punctuateTimer -= Time.deltaTime;
+                if (punctuateTimer <= 0)
+                {
+                    plug?.SetPowerLevel(currentPower);
+                }
+            }
+            else if (vibing)
             {
                 timeToReset -= Time.deltaTime;
                 if (!vibing)
@@ -87,8 +106,14 @@ namespace ButtplugMod
         }
         private int OnHeroDamaged(int hazardType, int damageAmount)
         {
-            if (hazardType == 0) DoGoodVibes(damageAmount * 0.4f);
+            if (hazardType == 0) return damageAmount;
             else DoGoodVibes(damageAmount);
+            if (punctuateHits)
+            {
+                plug?.SetPowerLevel(1);
+                punctuateTimer = 1;
+                Log("Hit punctuated by 1 second of max power.");
+            }
             return damageAmount;
         }
         private void DoGoodVibes(float amount)
@@ -107,7 +132,7 @@ namespace ButtplugMod
             if (amount is < 1 and > 0) LogVibe($"Healed. vibing at intensity {currentPower} for {seconds} seconds");
             else LogVibe($"Took {amount} damage, vibing at intensity {currentPower} for {seconds} seconds");
             timeToReset += seconds;
-            plug?.SetPowerLevel(currentPower);
+            if (!punctuateHits) plug?.SetPowerLevel(currentPower);
         }
         public void LogVibe(string s) 
         {
@@ -243,7 +268,43 @@ namespace ButtplugMod
                         69 => 7,
                         _ => 4
                     }
-                } //seconds per hit
+                }, //seconds per hit
+                new IMenuMod.MenuEntry {
+                    Name = "Random surprises",
+                    Description = "Every frame has a 1 in 1,000,000 chance of fun surprises",
+                    Values = new string[] {
+                        "On",
+                        "Off"
+                    },
+                    Saver = opt => randomSurprises = opt switch {
+                        0 => true,
+                        1 => false,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    },
+                    Loader = () => randomSurprises switch {
+                        true => 0,
+                        false => 1,
+                    }
+                }, //random surprises
+                new IMenuMod.MenuEntry {
+                    Name = "Punctuate hits",
+                    Description = "Every hit causes 1 second of max power vibe, followed by regular",
+                    Values = new string[] {
+                        "On",
+                        "Off"
+                    },
+                    Saver = opt => punctuateHits = opt switch {
+                        0 => true,
+                        1 => false,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    },
+                    Loader = () => punctuateHits switch {
+                        true => 0,
+                        false => 1,
+                    }
+                } //punctuate hits
             };
         }
         public void Unload()

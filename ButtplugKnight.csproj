@@ -25,23 +25,31 @@
   <Target Name="CopyMod" AfterTargets="PostBuildEvent">
     <RemoveDir Condition="Exists('$(ExportDir)/$(TargetName)/')" Directories="$(ExportDir)/$(TargetName)/" />
     <MakeDir Directories="$(ExportDir)/$(TargetName)/" />
-    <MakeDir Directories="$(ExportDir)/$(TargetName)/zip/" />
+    <!--<MakeDir Directories="$(ExportDir)/$(TargetName)/zip/" />-->
     <MakeDir Condition="!Exists('$(HollowKnightRefs)/Mods/$(TargetName)/')" Directories="$(HollowKnightRefs)/Mods/$(TargetName)/" />
-
+<!--
     <Copy Condition="'$(DocumentationFile)' != ''" SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb;$(TargetDir)/$(TargetName).xml" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/" />
     <Copy Condition="'$(DocumentationFile)' == ''" SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/" />
-
+-->
+    
+    
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ExportDir)/$(TargetName)/" />
-    <Copy SourceFiles="$(ExportDir)\bin\Debug\$(TargetFramework)\Buttplug.dll" DestinationFolder="$(ExportDir)/$(TargetName)/" />
     <Copy SourceFiles="$(ExportDir)\bin\Debug\$(TargetFramework)\ButtplugManaged.dll" DestinationFolder="$(ExportDir)/$(TargetName)/" />
     <Copy SourceFiles="$(ExportDir)\bin\Debug\$(TargetFramework)\websocket-sharp.dll" DestinationFolder="$(ExportDir)/$(TargetName)/" />
+
+    <Copy SourceFiles="$(ExportDir)/$(TargetName)/$(TargetName).dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/" />
+    <Copy SourceFiles="$(ExportDir)/$(TargetName)/ButtplugManaged.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/" />
+    <Copy SourceFiles="$(ExportDir)/$(TargetName)/websocket-sharp.dll" DestinationFolder="$(HollowKnightRefs)/Mods/$(TargetName)/" />
     
     <Copy Condition="'$(DocumentationFile)' != ''" SourceFiles="ReadMe.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb;$(TargetDir)/$(TargetName).xml" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
     <Copy Condition="'$(DocumentationFile)' == ''" SourceFiles="ReadMe.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
     
-    <ZipDirectory SourceDirectory="$(ExportDir)/$(TargetName)/zip/" DestinationFile="$(ExportDir)/$(TargetName)/$(TargetName).zip" />
-    <RemoveDir Directories="$(ExportDir)/$(TargetName)/zip/" />
+    <!--<ZipDirectory SourceDirectory="$(ExportDir)/$(TargetName)/zip/" DestinationFile="$(ExportDir)/$(TargetName)/$(TargetName).zip" />-->
+    <!--<RemoveDir Directories="$(ExportDir)/$(TargetName)/zip/" />-->
 
+    <!--
+    Uncomment this block to generate a SHA.txt hash file
+    
     <PropertyGroup>
       <OutputFileString>SHA256 - $(AssemblyTitle).dll, Version $(AssemblyVersion):</OutputFileString>
     </PropertyGroup>
@@ -55,10 +63,11 @@
       <Output TaskParameter="Items" ItemName="ZipFilesWithHashes" />
     </GetFileHash>
     <WriteLinesToFile File="$(ExportDir)/$(TargetName)/SHA.txt" Lines="$(OutputFileString);@(FilesWithHashes->'%(FileHash)');$(OutputZipString);@(ZipFilesWithHashes->'%(FileHash)')" Overwrite="true" Encoding="UTF-8" />
+  -->
   </Target>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>E:\Program Files (x86)\Steam\SteamApps\common\Hollow Knight\hollow_knight_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(HollowKnightRefs)\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Buttplug">
       <HintPath>$(HollowKnightRefs)/Mods/$(TargetName)/Buttplug.dll</HintPath>

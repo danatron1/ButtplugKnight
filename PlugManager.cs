@@ -6,11 +6,25 @@ using UnityEngine;
 
 namespace GoodVibes
 {
-
+    public static class AsyncFAF
+    {
+        public static async void FireAndForget(this Task t, Action<string> logging)
+        {
+            try
+            {
+                await t;
+            }
+            catch (Exception e)
+            {
+                logging?.Invoke($"FAF Exception: {e.GetType()}; {e.Message}");
+                if (e.InnerException != null) logging?.Invoke($"    Inner: {e.InnerException.GetType()}; {e.InnerException.Message}");
+            }
+        }
+    }
     public class PlugManager
     {
         private ButtplugWebsocketConnectorOptions _connector;
-        private int _retries;
+        //private int _retries;
 
         private float _currentPower = 0;
 
@@ -26,7 +40,7 @@ namespace GoodVibes
         private void SetupClient()
         {
             Client = new ButtplugClient("Plug Control");
-
+            _triedToInitialize = false;
             Client.DeviceAdded += OnDeviceAdded;
             Client.DeviceRemoved += OnDeviceRemoved;
             Client.ServerDisconnect += ClientOnServerDisconnect;
@@ -43,19 +57,22 @@ namespace GoodVibes
         {
             Log($"Device Disconnected: {e.Device.Name}");
         }
-
+        bool _tryingToReconnect = false;
         private async void ClientOnServerDisconnect(object sender, EventArgs e)
         {
+            if (_tryingToReconnect) return;
             Log("Disconnected from server.");
-            for (_retries = 0; _retries < RetryAmount; _retries++)
+            _tryingToReconnect = true;
+            for (int _retries = 0; _retries < RetryAmount; _retries++)
             {
                 Log($"Reconnecting... (Attempt {_retries + 1} of {RetryAmount})");
                 SetupClient();
-                var success = await TryConnect();
+                bool success = await TryConnect();
                 if (success) return;
                 Log("Trying again in 5 seconds.");
                 await Task.Delay(TimeSpan.FromSeconds(5));
             }
+            _tryingToReconnect = false;
             Log("Could not reconnect to server.");
         }
 
@@ -69,24 +86,51 @@ namespace GoodVibes
             Log("Server ping timed out.");
         }
 
-        private void UpdatePowerLevels()
+        private async Task UpdatePowerLevels()
         {
+            Log($"Updating power level to {_currentPower*100}%");
             if (Client == null)
             {
-                Log($"Tried to update power level, but Client was null");
-                return;
+                Log($"Intiface Client is null - cannot update power. Try restarting the game.");
+                if (_triedToInitialize) SetupClient();
+                if (!await Initialize()) return;
             }
-            if (!Client.Connected)
+            if (!Client.Connected && Client.Devices.Length == 0 && false)
             {
-                Log($"Tried to update power level, but Client was disconnected");
-                return;
+                Log($"Intiface Client is disconnected - Is the server running?");
+                if (!await TryConnect())
+                {
+                    Log($"Failed to connect. Resetting client to reinitialize");
+                    SetupClient();
+                    if (await Initialize()) Log("Reinitialized!");
+                    else return;
+                }
+                else Log("Reconnected!");
+            }
+            else if (Client.Devices.Length == 0)
+            {
+                Log($"Intiface Client connected, but no devices are connected - Can you see the device under \"Devices\" on Intiface Central?");
             }
             foreach (var plug in Client?.Devices)
             {
                 plug?.SendVibrateCmd(_currentPower);
             }
         }
-
+        private async Task<bool> TryScanning()
+        {
+            Log("Starting to scan for devices.");
+            try
+            {
+                await Client.StartScanningAsync();
+                _triedToInitialize = false;
+            }
+            catch (ButtplugException ex)
+            {
+                Log($"Failed to start scanning for devices: {ex.InnerException?.Message}");
+                return false;
+            }
+            return true;
+        }
         private async Task<bool> TryConnect()
         {
             try
@@ -94,19 +138,8 @@ namespace GoodVibes
                 Log("Connecting to the server...");
                 await Client.ConnectAsync(_connector);
                 Log("Connected to server.");
-
-                Log("Starting to scan for devices.");
-                try
-                {
-                    await Client.StartScanningAsync();
-                }
-                catch (ButtplugException ex)
-                {
-                    Log($"Failed to start scanning for devices: {ex.InnerException?.Message}");
-                    return false;
-                }
-
-                return true;
+                _tryingToReconnect = false;
+                return await TryScanning();
             }
             catch (ButtplugConnectorException e)
             {
@@ -122,6 +155,7 @@ namespace GoodVibes
         internal bool _triedToInitialize = false;
         public async Task<bool> Initialize() 
         {
+            if (_triedToInitialize) return false;
             _triedToInitialize = true;
             _connector = new ButtplugWebsocketConnectorOptions(new Uri($"ws://localhost:{Port}/buttplug"));
             SetupClient();
@@ -135,19 +169,11 @@ namespace GoodVibes
 
             return true;
         }
-
         public void SetPowerLevel(float level)
         {
+            //if (level == _currentPower) return;
             _currentPower = Mathf.Clamp(level, 0, 1);
-            UpdatePowerLevels();
-        }
-
-        public async Task SetPowerLevelDuration(float level, TimeSpan span)
-        {
-            var old = _currentPower;
-            SetPowerLevel(level);
-            await Task.Delay(span);
-            SetPowerLevel(old);
+            Task.Factory.StartNew(() => UpdatePowerLevels().FireAndForget(LogMessage));
         }
     }
 }
