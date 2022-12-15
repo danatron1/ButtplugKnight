@@ -24,6 +24,8 @@ namespace ButtplugMod
         private bool scaleWithDamage = true;
         private bool randomSurprises = true;
         private bool punctuateHits = false;
+
+        bool vulnerable => vulnerableWhileVibing && vibing;
         private bool vulnerableWhileVibing = false;
 
         string logPath = $@"{Environment.CurrentDirectory}\hollow_knight_Data\Managed\Mods\ButtplugKnight\VibeLog.txt";
@@ -37,7 +39,7 @@ namespace ButtplugMod
         PlugManager plug;
 
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "v1.2.1";
+        public override string GetVersion() => "v1.2.2";
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
@@ -85,12 +87,12 @@ namespace ButtplugMod
             {
                 timeToReset += 10;
                 plug?.SetPowerLevel(1);
-                Log("Random surprise triggered! Enjoy 10 seconds of max power :)");
+                LogVibe("Random surprise triggered! Enjoy 10 seconds of max power :)");
             }
             if (punctuateHits && punctuateTimer > 0)
             {
                 punctuateTimer -= Time.deltaTime;
-                if (punctuateTimer <= 0)
+                if (punctuateTimer <= 0 && currentPower < 1)
                 {
                     plug?.SetPowerLevel(currentPower);
                 }
@@ -102,50 +104,68 @@ namespace ButtplugMod
                 {
                     plug?.SetPowerLevel(0);
                     currentPower = 0;
+                    timeToReset = 0;
                 }
             }
         }
         private int OnHeroDamaged(int hazardType, int damageAmount)
         {
             if (hazardType == 0) return damageAmount;
-            else DoGoodVibes(damageAmount);
+            if (vulnerable) damageAmount *= 2;
+            DoGoodVibes(damageAmount);
             if (punctuateHits)
             {
-                if (currentPower < 1) plug?.SetPowerLevel(1);
+                if (currentPower < 1)
+                {
+                    plug?.SetPowerLevel(1);
+                    LogVibe("Hit punctuated by 1 second of max power.");
+                }
                 punctuateTimer = 1;
-                Log("Hit punctuated by 1 second of max power.");
             }
-            if (vulnerableWhileVibing && vibing) damageAmount *= 2; 
             return damageAmount;
         }
         private void DoGoodVibes(float amount)
         {
-            if (!scaleWithDamage && amount > 1) amount = 1; //cap to 1 if we're not scaling with damage
+            bool healTriggered = amount < 1;
+            string message = "";
+            //if took more than 1 damage
+            if (amount > 1)
+            {
+                if (!scaleWithDamage) amount = 1; //scale it to 1 if we're not doing that
+                else if (!vulnerable || amount > 2) message = "(heavy) "; //else mark it as a heavy hit
+                //you always take 2x damage while vulnerable.
+                //A heavy hit is defined by one that's normally 2+ damage.
+            }
             //calculate new power level
             float newPower = baseVibeRate * amount;
+            if (vulnerable && !healTriggered) newPower /= 2; //vulnerable is only supposed to effect the game, not the vibe
             if (doubleOnOverlap) newPower += currentPower;
             else if (newPower < currentPower) newPower = currentPower;
             newPower = Mathf.Clamp01(newPower);
-            //apply doubling after (since vibration is additive it's already accounted for)
-            string message = amount is < 1 and > 0 ? "Healed" : $"Took {amount} damage"; //just for log message
+            //logging type of damage
+            if (healTriggered) message += "Healed";
+            else message += $"Took {amount} damage"; //just for log message
+            if (vulnerable) message = "(vuln. 2x) " + message;
             if (vibing && doubleOnOverlap)
             {
-                message = "(DOUBLED) " + message;
-                amount *= 2;
+                message = "(overlap) " + message;
+                if (!vulnerable) amount *= 2; //apply doubling after so it only effects timer (since vibration is additive it's already accounted for)
             }
+            //by default, dying in radiant mode triggers the game to deal 9999 damage to you
+            //this equates to almost 14 hours of vibe at default settings. I think it's fair to lower it.
             if (amount > 10)
             {
-                //by default, dying in radiant mode triggers the game to deal 9999 damage to you
-                //this equates to almost 14 hours of vibe at default settings. I think it's fair to lower it.
                 LogVibe($"Oof, radiant death? That'd normally be {secondsPerHit * amount} seconds. Lowering that a bit.");
                 amount = 10;
             }
             float seconds = secondsPerHit * amount;
-            LogVibe($"{message}. vibing at intensity {newPower} for {seconds} seconds");
             timeToReset += seconds;
+            LogVibe($"{message}. Vibing at {100*newPower}% for {seconds} seconds. {timeToReset:f1}s left.");
             if (currentPower == newPower) return;
             currentPower = newPower;
-            if (!punctuateHits) plug?.SetPowerLevel(currentPower);
+            //if we're punctuating hits, we don't need to update the power here, as it'll be done after.
+            //unless, of course, it's not caused by a hit (heal triggered) or it's already at 100%.
+            if (!punctuateHits || currentPower == 1 || healTriggered) plug?.SetPowerLevel(currentPower);
         }
         public void LogVibe(string s) 
         {
@@ -157,6 +177,80 @@ namespace ButtplugMod
         {
             return new List<IMenuMod.MenuEntry>
             {
+                new IMenuMod.MenuEntry {
+                    Name = "Intensity",
+                    Description = "The vibration level from 1 damage (50% recommended)",
+                    Values = new string[] {
+                        "5%",
+                        "10%",
+                        "20%",
+                        "30%",
+                        "40%",
+                        "50%",
+                        "75%",
+                        "100%"
+                    },
+                    Saver = opt => baseVibeRate = opt switch {
+                        0 => 0.05f,
+                        1 => 0.1f,
+                        2 => 0.2f,
+                        3 => 0.3f,
+                        4 => 0.4f,
+                        5 => 0.5f,
+                        6 => 0.75f,
+                        7 => 1f,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    },
+                    Loader = () => baseVibeRate switch {
+                        0.05f => 0,
+                        0.1f => 1,
+                        0.2f => 2,
+                        0.3f => 3,
+                        0.4f => 4,
+                        0.5f => 5,
+                        0.75f => 6,
+                        1f => 7,
+                        _ => 5
+                    } 
+                }, //Intensity
+                new IMenuMod.MenuEntry {
+                    Name = "Seconds per hit",
+                    Description = "The vibration duration from 1 damage",
+                    Values = new string[] {
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "10",
+                        "20",
+                        "69"
+                    },
+                    Saver = opt => secondsPerHit = opt switch {
+                        0 => 1,
+                        1 => 2,
+                        2 => 3,
+                        3 => 4,
+                        4 => 5,
+                        5 => 10,
+                        6 => 20,
+                        7 => 69,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    },
+                    Loader = () => secondsPerHit switch {
+                        1 => 0,
+                        2 => 1,
+                        3 => 2,
+                        4 => 3,
+                        5 => 4,
+                        10 => 5,
+                        20 => 6,
+                        69 => 7,
+                        _ => 4
+                    }
+                }, //seconds per hit
                 new IMenuMod.MenuEntry {
                     Name = "Buzz when healing",
                     Description = "Healing will cause a small short vibration",
@@ -211,77 +305,6 @@ namespace ButtplugMod
                         false => 1,
                     } 
                 }, //double on overlap
-                new IMenuMod.MenuEntry {
-                    Name = "Intensity",
-                    Description = "The vibration level from 1 damage (50% recommended)",
-                    Values = new string[] {
-                        "10%",
-                        "20%",
-                        "30%",
-                        "40%",
-                        "50%",
-                        "75%",
-                        "100%"
-                    },
-                    Saver = opt => baseVibeRate = opt switch {
-                        0 => 0.1f,
-                        1 => 0.2f,
-                        2 => 0.3f,
-                        3 => 0.4f,
-                        4 => 0.5f,
-                        5 => 0.75f,
-                        6 => 1f,
-                        // This should never be called
-                        _ => throw new InvalidOperationException()
-                    },
-                    Loader = () => baseVibeRate switch {
-                        0.1f => 0,
-                        0.2f => 1,
-                        0.3f => 2,
-                        0.4f => 3,
-                        0.5f => 4,
-                        0.75f => 5,
-                        1f => 6,
-                        _ => 4
-                    } 
-                }, //Intensity
-                new IMenuMod.MenuEntry {
-                    Name = "Seconds per hit",
-                    Description = "The vibration duration from 1 damage",
-                    Values = new string[] {
-                        "1",
-                        "2",
-                        "3",
-                        "4",
-                        "5",
-                        "10",
-                        "20",
-                        "69"
-                    },
-                    Saver = opt => secondsPerHit = opt switch {
-                        0 => 1,
-                        1 => 2,
-                        2 => 3,
-                        3 => 4,
-                        4 => 5,
-                        5 => 10,
-                        6 => 20,
-                        7 => 69,
-                        // This should never be called
-                        _ => throw new InvalidOperationException()
-                    },
-                    Loader = () => secondsPerHit switch {
-                        1 => 0,
-                        2 => 1,
-                        3 => 2,
-                        4 => 3,
-                        5 => 4,
-                        10 => 5,
-                        20 => 6,
-                        69 => 7,
-                        _ => 4
-                    }
-                }, //seconds per hit
                 new IMenuMod.MenuEntry {
                     Name = "Random surprises",
                     Description = "Every frame has a 1 in 1,000,000 chance of fun surprises",

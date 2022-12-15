@@ -109,7 +109,7 @@ namespace GoodVibes
             }
             else if (Client.Devices.Length == 0)
             {
-                Log($"Intiface Client connected, but no devices are connected - Can you see the device under \"Devices\" on Intiface Central?");
+                Log($"Intiface Client connected, but no devices are connected - Check the \"Devices\" tab on Intiface Central, or try restarting the game.");
             }
             foreach (var plug in Client?.Devices)
             {
