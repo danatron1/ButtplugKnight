@@ -14,48 +14,59 @@ namespace ButtplugMod
     {
         internal static ButtplugMod Instance;
 
-        private int port = 12345;
+        const int port = 12345;
+        const int retryAttempts = 10;
+
         private int secondsPerHit = 5;
-        private int retryAttempts = 10;
         private float baseVibeRate = 0.5f;
 
         private bool doubleOnOverlap = true;
-        private bool buzzOnHeal = true;
         private bool scaleWithDamage = true;
         private bool randomSurprises = true;
+        private bool buzzOnHeal = true;
+        private bool buzzOnDamage = true;
+        private bool buzzOnStrike = false;
         private bool punctuateHits = false;
 
-        bool vulnerable => vulnerableWhileVibing && vibing;
         private bool vulnerableWhileVibing = false;
+        bool vulnerable => vulnerableWhileVibing && vibing;
 
         string logPath = $@"{Environment.CurrentDirectory}\hollow_knight_Data\Managed\Mods\ButtplugKnight\VibeLog.txt";
 
         bool vibing => timeToReset > 0;
 
-        float currentPower = 0;
-        float timeToReset = 2;
-        float punctuateTimer = 0;
+        float currentPower;
+        float timeToReset;
+        float punctuateTimer;
 
         PlugManager plug;
 
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "v1.2.2";
+        public override string GetVersion() => "v1.2.3";
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             Log("Initializing");
-            Instance = this; 
+            Instance = this;
+            currentPower = 0;
+            timeToReset = 1;
+            punctuateTimer = 0;
             Log("Initialized"); 
             ModHooks.HeroUpdateHook += OnHeroUpdate;
             ModHooks.BeforeAddHealthHook += BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook += OnHeroDamaged;
+            ModHooks.SoulGainHook += OnSoulGain;
 
             if (!File.Exists(logPath)) File.Create(logPath).Close();
             else if (plug == null) File.WriteAllLines(logPath, new string[0]);
 
             if (plug == null) PlugSetup();
         }
-
+        private int OnSoulGain(int arg)
+        {
+            if (buzzOnStrike) DoGoodVibes(arg / 50f);
+            return arg;
+        }
         private int BeforeHealthAdd(int arg)
         {
             if (buzzOnHeal) DoGoodVibes(arg * 0.2f);
@@ -110,6 +121,7 @@ namespace ButtplugMod
         }
         private int OnHeroDamaged(int hazardType, int damageAmount)
         {
+            if (!buzzOnDamage) return damageAmount;
             if (hazardType == 0) return damageAmount;
             if (vulnerable) damageAmount *= 2;
             DoGoodVibes(damageAmount);
@@ -118,9 +130,9 @@ namespace ButtplugMod
                 if (currentPower < 1)
                 {
                     plug?.SetPowerLevel(1);
-                    LogVibe("Hit punctuated by 1 second of max power.");
+                    LogVibe("Hit punctuated by half a second of max power.");
                 }
-                punctuateTimer = 1;
+                punctuateTimer = 0.5f;
             }
             return damageAmount;
         }
@@ -143,7 +155,7 @@ namespace ButtplugMod
             else if (newPower < currentPower) newPower = currentPower;
             newPower = Mathf.Clamp01(newPower);
             //logging type of damage
-            if (healTriggered) message += "Healed";
+            if (healTriggered) message += $"Small vibe source ({amount})";
             else message += $"Took {amount} damage"; //just for log message
             if (vulnerable) message = "(vuln. 2x) " + message;
             if (vibing && doubleOnOverlap)
@@ -252,6 +264,24 @@ namespace ButtplugMod
                     }
                 }, //seconds per hit
                 new IMenuMod.MenuEntry {
+                    Name = "Buzz on damage",
+                    Description = "Taking damage causes vibrations - the point of the mod.",
+                    Values = new string[] {
+                        "On",
+                        "Off"
+                    },
+                    Saver = opt => buzzOnDamage = opt switch {
+                        0 => true,
+                        1 => false,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    },
+                    Loader = () => buzzOnDamage switch {
+                        true => 0,
+                        false => 1,
+                    }
+                }, //buzz when healing
+                new IMenuMod.MenuEntry {
                     Name = "Buzz when healing",
                     Description = "Healing will cause a small short vibration",
                     Values = new string[] {
@@ -269,6 +299,24 @@ namespace ButtplugMod
                         false => 1,
                     }
                 }, //buzz when healing
+                new IMenuMod.MenuEntry {
+                    Name = "Buzz on soul gain",
+                    Description = "Extracting white fluids from enemies will cause a small vibration",
+                    Values = new string[] {
+                        "On",
+                        "Off"
+                    },
+                    Saver = opt => buzzOnStrike = opt switch {
+                        0 => true,
+                        1 => false,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    },
+                    Loader = () => buzzOnStrike switch {
+                        true => 0,
+                        false => 1,
+                    }
+                }, //buzz on soul gain
                 new IMenuMod.MenuEntry {
                     Name = "Scale with damage",
                     Description = "Heavier hits will cause longer vibrations",
@@ -324,25 +372,6 @@ namespace ButtplugMod
                     }
                 }, //random surprises
                 new IMenuMod.MenuEntry {
-                    Name = "Punctuate hits",
-                    Description = "Every hit causes 1 second of max power vibe, followed by regular",
-                    Values = new string[] {
-                        "On",
-                        "Off"
-                    },
-                    Saver = opt => punctuateHits = opt switch {
-                        0 => true,
-                        1 => false,
-                        // This should never be called
-                        _ => throw new InvalidOperationException()
-                    },
-                    Loader = () => punctuateHits switch {
-                        true => 0,
-                        false => 1,
-                    }
-                }, //punctuate hits
-                //max line length |----------------------------------------------------------------|
-                new IMenuMod.MenuEntry {
                     Name = "Vulnerable vibing",
                     Description = "While vibing, the knight takes double damage.",
                     Values = new string[] {
@@ -359,7 +388,26 @@ namespace ButtplugMod
                         true => 0,
                         false => 1,
                     }
-                } //Vulnerable when vibing
+                }, //Vulnerable when vibing
+                new IMenuMod.MenuEntry {
+                    Name = "Punctuate hits",
+                    Description = "Hits cause half a second of max power vibe, followed by regular",
+                    Values = new string[] {
+                        "On",
+                        "Off"
+                    },
+                    Saver = opt => punctuateHits = opt switch {
+                        0 => true,
+                        1 => false,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    },
+                    Loader = () => punctuateHits switch {
+                        true => 0,
+                        false => 1,
+                    }
+                } //punctuate hits
+                //max line length |----------------------------------------------------------------|
             };
         }
         public void Unload()

@@ -1,6 +1,7 @@
 ﻿//using Buttplug;
 using ButtplugManaged;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -35,7 +36,22 @@ namespace GoodVibes
 
         public event Action<string> LogMessage;
 
-        private void Log(string s) => LogMessage?.Invoke(s);
+        private async void Log(string s)
+        {
+            for (int logAttempts = 0; logAttempts < 5;)
+            {
+                try
+                {
+                    LogMessage?.Invoke(s);
+                    return;
+                }
+                catch (IOException)
+                {
+                    await Task.Delay(100);
+                    logAttempts++;
+                }
+            }
+        }
 
         private void SetupClient()
         {
@@ -109,7 +125,7 @@ namespace GoodVibes
             }
             else if (Client.Devices.Length == 0)
             {
-                Log($"Intiface Client connected, but no devices are connected - Check the \"Devices\" tab on Intiface Central, or try restarting the game.");
+                Log($"Intiface Client connected, but no devices are connected.");
             }
             foreach (var plug in Client?.Devices)
             {

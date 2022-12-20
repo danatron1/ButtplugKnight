@@ -39,7 +39,7 @@ If you have any issues installing, feel free to contact me for help. It should g
 
 When you take damage, it will buzz at 50% power for 5 seconds. (Double damage hits are 100% power for 10 seconds)
 
-When you heal, it will buzz at 10% power for 1 second.
+When you heal, it will buzz at 10% power for 1 second (this can be disabled). There's also an option to buzz on soul gain, effectively causing on-hit vibes.
 
 If one of the above triggers while it is still vibrating, the effect and duration will be **doubled**. This means that if you take a regular hit, then take another before the 5 seconds are up, you will have an additional 10 seconds at 100% power. 
 
