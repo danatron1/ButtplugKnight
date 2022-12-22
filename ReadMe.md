@@ -41,7 +41,7 @@ Options to cause a vibration whenever you take damage, heal, or gain soul;
 
 * Upon taking damage (default on), it will buzz at 50% power for 5 seconds. Double damage hits are 100% power for 10 seconds.
 * Upon healing (default on), it will buzz at 10% power for 1 second.
-* Upon gaining soul (default off), it will buzz at ~10% power for ~1 second (varies slightly depending on fill level and charm loadout). Doesn't matter if gauge is full.
+* Upon gaining soul (default off), it will buzz at ~10% power for ~1 second (varies slightly depending on fill level and charm loadout). Can be set to not go off when your soul gauge is full, or always.
 
 If one of the above triggers while it is still vibrating, the effect and duration will be **doubled**. This means that if you take a regular hit, then take another before the 5 seconds are up, you will have an additional 10 seconds at 100% power. 
 

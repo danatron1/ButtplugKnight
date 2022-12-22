@@ -14,6 +14,7 @@ namespace ButtplugMod
     public class ButtplugMod : Mod, IMenuMod, ITogglableMod
     {
         internal static ButtplugMod Instance;
+        static PlayerData player => PlayerData.instance;
 
         const int port = 12345;
         const int retryAttempts = 10;
@@ -26,7 +27,7 @@ namespace ButtplugMod
         private bool  randomSurprises = true;
         private bool  buzzOnHeal = true;
         private bool  buzzOnDamage = true;
-        private bool  buzzOnStrike = false;
+        private int buzzOnStrike = 0; //off, not when full, always
         private bool  punctuateHits = false;
         private bool  vulnerableWhileVibing = false;
 
@@ -71,7 +72,7 @@ namespace ButtplugMod
                 randomSurprises = bool.Parse(settings[nameof(randomSurprises)]);
                 buzzOnHeal = bool.Parse(settings[nameof(buzzOnHeal)]);
                 buzzOnDamage = bool.Parse(settings[nameof(buzzOnDamage)]);
-                buzzOnStrike = bool.Parse(settings[nameof(buzzOnStrike)]);
+                buzzOnStrike = int.Parse(settings[nameof(buzzOnStrike)]);
                 punctuateHits = bool.Parse(settings[nameof(punctuateHits)]);
                 vulnerableWhileVibing = bool.Parse(settings[nameof(vulnerableWhileVibing)]);
             }
@@ -132,6 +133,7 @@ namespace ButtplugMod
                     break;
                 }
             }
+
             LoadSettings();
             Log("Initialized");
 
@@ -142,7 +144,13 @@ namespace ButtplugMod
         }
         private int OnSoulGain(int arg)
         {
-            if (buzzOnStrike) DoGoodVibes(arg / 50f);
+            if (buzzOnStrike == 0) return arg;
+            if (buzzOnStrike == 1 && player.GetInt(nameof(player.MPCharge)) == player.GetInt(nameof(player.maxMP)))
+            {
+                if (player.GetInt(nameof(player.MPReserve)) == player.GetInt(nameof(player.MPReserveMax))) return arg;
+                if (BossSequenceController.BoundSoul) return arg;
+            }
+            DoGoodVibes(arg / 50f);
             return arg;
         }
         private int BeforeHealthAdd(int arg)
@@ -380,19 +388,12 @@ namespace ButtplugMod
                     Name = "Buzz on soul gain",
                     Description = "Extracting white fluids from enemies will cause a small vibration",
                     Values = new string[] {
-                        "On",
-                        "Off"
+                        "Off",
+                        "Not when full",
+                        "Always" 
                     },
-                    Saver = opt => {buzzOnStrike = opt switch {
-                        0 => true,
-                        1 => false,
-                        // This should never be called
-                        _ => throw new InvalidOperationException()
-                    }; SaveSettings(); },
-                    Loader = () => buzzOnStrike switch {
-                        true => 0,
-                        false => 1,
-                    }
+                    Saver = opt => {buzzOnStrike = opt; SaveSettings(); },
+                    Loader = () => buzzOnStrike
                 }, //buzz on soul gain
                 new IMenuMod.MenuEntry {
                     Name = "Scale with damage",
