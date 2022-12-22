@@ -116,7 +116,6 @@ namespace ButtplugMod
             timeToReset = 1;
             punctuateTimer = 0;
 
-            LoadSettings();
 
             ModHooks.HeroUpdateHook += OnHeroUpdate;
             ModHooks.BeforeAddHealthHook += BeforeHealthAdd;
@@ -133,6 +132,7 @@ namespace ButtplugMod
                     break;
                 }
             }
+            LoadSettings();
             Log("Initialized");
 
             if (!File.Exists(logPath)) File.Create(logPath).Close();
