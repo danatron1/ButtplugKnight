@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -17,21 +18,30 @@ namespace ButtplugMod
         const int port = 12345;
         const int retryAttempts = 10;
 
-        private int secondsPerHit = 5;
+        private int   secondsPerHit = 5;
         private float baseVibeRate = 0.5f;
 
-        private bool doubleOnOverlap = true;
-        private bool scaleWithDamage = true;
-        private bool randomSurprises = true;
-        private bool buzzOnHeal = true;
-        private bool buzzOnDamage = true;
-        private bool buzzOnStrike = false;
-        private bool punctuateHits = false;
+        private bool  doubleOnOverlap = true;
+        private bool  scaleWithDamage = true;
+        private bool  randomSurprises = true;
+        private bool  buzzOnHeal = true;
+        private bool  buzzOnDamage = true;
+        private bool  buzzOnStrike = false;
+        private bool  punctuateHits = false;
+        private bool  vulnerableWhileVibing = false;
 
-        private bool vulnerableWhileVibing = false;
+        /*adding a new setting? Make sure to;
+         *  add it to the menu options (ensuring you change the loader and saver)
+         *  add it to the save settings method
+         *  add it to the load settings method
+         */
+
         bool vulnerable => vulnerableWhileVibing && vibing;
 
-        string logPath = $@"{Environment.CurrentDirectory}\hollow_knight_Data\Managed\Mods\ButtplugKnight\VibeLog.txt";
+        static string hkData = "hollow_knight_Data";
+        string modPath => $@"{Environment.CurrentDirectory}\{hkData}\Managed\Mods\ButtplugKnight";
+        string logPath => $@"{modPath}\VibeLog.txt";
+        string settingsPath => $@"{modPath}\Settings.txt";
 
         bool vibing => timeToReset > 0;
 
@@ -43,7 +53,61 @@ namespace ButtplugMod
 
         new public string GetName() => "Buttplug Knight";
         public override string GetVersion() => "v1.2.3";
-
+        void LoadSettings()
+        {
+            try
+            {
+                string[] settingsRaw = File.ReadAllLines(settingsPath);
+                Dictionary<string, string> settings = new Dictionary<string, string>();
+                foreach (string setting in settingsRaw)
+                {
+                    string[] parts = setting.Split('=');
+                    settings.Add(parts[0], parts[1]);
+                }
+                secondsPerHit = int.Parse(settings[nameof(secondsPerHit)]);
+                baseVibeRate = float.Parse(settings[nameof(baseVibeRate)]);
+                doubleOnOverlap = bool.Parse(settings[nameof(doubleOnOverlap)]);
+                scaleWithDamage = bool.Parse(settings[nameof(scaleWithDamage)]);
+                randomSurprises = bool.Parse(settings[nameof(randomSurprises)]);
+                buzzOnHeal = bool.Parse(settings[nameof(buzzOnHeal)]);
+                buzzOnDamage = bool.Parse(settings[nameof(buzzOnDamage)]);
+                buzzOnStrike = bool.Parse(settings[nameof(buzzOnStrike)]);
+                punctuateHits = bool.Parse(settings[nameof(punctuateHits)]);
+                vulnerableWhileVibing = bool.Parse(settings[nameof(vulnerableWhileVibing)]);
+            }
+            catch (FileNotFoundException ex)
+            {
+                Log("No settings file found; using default settings.");
+            }
+            catch (Exception ex)
+            {
+                Log($"Failed to load settings. {ex.GetType()}; {ex.Message}");
+            }
+        }
+        void SaveSettings()
+        {
+            try
+            {
+                List<string> settings = new()
+                {
+                    $"{nameof(secondsPerHit)}={secondsPerHit}",
+                    $"{nameof(baseVibeRate)}={baseVibeRate}",
+                    $"{nameof(doubleOnOverlap)}={doubleOnOverlap}",
+                    $"{nameof(scaleWithDamage)}={scaleWithDamage}",
+                    $"{nameof(randomSurprises)}={randomSurprises}",
+                    $"{nameof(buzzOnHeal)}={buzzOnHeal}",
+                    $"{nameof(buzzOnDamage)}={buzzOnDamage}",
+                    $"{nameof(buzzOnStrike)}={buzzOnStrike}",
+                    $"{nameof(punctuateHits)}={punctuateHits}",
+                    $"{nameof(vulnerableWhileVibing)}={vulnerableWhileVibing}"
+                };
+                File.WriteAllLines(settingsPath, settings.ToArray());
+            }
+            catch (Exception ex)
+            {
+                Log($"Failed to save settings. {ex.GetType()}; {ex.Message}");
+            }
+        }
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             Log("Initializing");
@@ -51,11 +115,25 @@ namespace ButtplugMod
             currentPower = 0;
             timeToReset = 1;
             punctuateTimer = 0;
-            Log("Initialized"); 
+
+            LoadSettings();
+
             ModHooks.HeroUpdateHook += OnHeroUpdate;
             ModHooks.BeforeAddHealthHook += BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook += OnHeroDamaged;
             ModHooks.SoulGainHook += OnSoulGain;
+
+            Regex pattern = new(@"[hH]ollow[\s_][kK]night[\s_][dD]ata");
+            foreach (string directory in Directory.EnumerateDirectories(Environment.CurrentDirectory))
+            {
+                Match match = pattern.Match(directory);
+                if (match.Success)
+                {
+                    hkData = match.Value;
+                    break;
+                }
+            }
+            Log("Initialized");
 
             if (!File.Exists(logPath)) File.Create(logPath).Close();
             else if (plug == null) File.WriteAllLines(logPath, new string[0]);
@@ -183,7 +261,6 @@ namespace ButtplugMod
         {
             File.AppendAllText(logPath, $"[{DateTime.Now}] {s}\n");
         }
-
         public bool ToggleButtonInsideMenu => false;
         public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
         {
@@ -202,7 +279,7 @@ namespace ButtplugMod
                         "75%",
                         "100%"
                     },
-                    Saver = opt => baseVibeRate = opt switch {
+                    Saver = opt => {baseVibeRate = opt switch {
                         0 => 0.05f,
                         1 => 0.1f,
                         2 => 0.2f,
@@ -213,7 +290,7 @@ namespace ButtplugMod
                         7 => 1f,
                         // This should never be called
                         _ => throw new InvalidOperationException()
-                    },
+                    }; SaveSettings(); },
                     Loader = () => baseVibeRate switch {
                         0.05f => 0,
                         0.1f => 1,
@@ -224,7 +301,7 @@ namespace ButtplugMod
                         0.75f => 6,
                         1f => 7,
                         _ => 5
-                    } 
+                    }
                 }, //Intensity
                 new IMenuMod.MenuEntry {
                     Name = "Seconds per hit",
@@ -239,7 +316,7 @@ namespace ButtplugMod
                         "20",
                         "69"
                     },
-                    Saver = opt => secondsPerHit = opt switch {
+                    Saver = opt => {secondsPerHit = opt switch {
                         0 => 1,
                         1 => 2,
                         2 => 3,
@@ -250,7 +327,7 @@ namespace ButtplugMod
                         7 => 69,
                         // This should never be called
                         _ => throw new InvalidOperationException()
-                    },
+                    }; SaveSettings(); },
                     Loader = () => secondsPerHit switch {
                         1 => 0,
                         2 => 1,
@@ -270,17 +347,17 @@ namespace ButtplugMod
                         "On",
                         "Off"
                     },
-                    Saver = opt => buzzOnDamage = opt switch {
+                    Saver = opt => {buzzOnDamage = opt switch {
                         0 => true,
                         1 => false,
                         // This should never be called
                         _ => throw new InvalidOperationException()
-                    },
+                    }; SaveSettings(); },
                     Loader = () => buzzOnDamage switch {
                         true => 0,
                         false => 1,
                     }
-                }, //buzz when healing
+                }, //buzz on damage
                 new IMenuMod.MenuEntry {
                     Name = "Buzz when healing",
                     Description = "Healing will cause a small short vibration",
@@ -288,12 +365,12 @@ namespace ButtplugMod
                         "On",
                         "Off"
                     },
-                    Saver = opt => buzzOnHeal = opt switch {
+                    Saver = opt => {buzzOnHeal = opt switch {
                         0 => true,
                         1 => false,
                         // This should never be called
                         _ => throw new InvalidOperationException()
-                    },
+                    }; SaveSettings(); },
                     Loader = () => buzzOnHeal switch {
                         true => 0,
                         false => 1,
@@ -306,12 +383,12 @@ namespace ButtplugMod
                         "On",
                         "Off"
                     },
-                    Saver = opt => buzzOnStrike = opt switch {
+                    Saver = opt => {buzzOnStrike = opt switch {
                         0 => true,
                         1 => false,
                         // This should never be called
                         _ => throw new InvalidOperationException()
-                    },
+                    }; SaveSettings(); },
                     Loader = () => buzzOnStrike switch {
                         true => 0,
                         false => 1,
@@ -324,12 +401,12 @@ namespace ButtplugMod
                         "On",
                         "Off"
                     },
-                    Saver = opt => scaleWithDamage = opt switch {
+                    Saver = opt => {scaleWithDamage = opt switch {
                         0 => true,
                         1 => false,
                         // This should never be called
                         _ => throw new InvalidOperationException()
-                    },
+                    }; SaveSettings(); },
                     Loader = () => scaleWithDamage switch {
                         true => 0,
                         false => 1,
@@ -342,16 +419,16 @@ namespace ButtplugMod
                         "On",
                         "Off"
                     },
-                    Saver = opt => doubleOnOverlap = opt switch {
+                    Saver = opt => {doubleOnOverlap = opt switch {
                         0 => true,
                         1 => false,
                         // This should never be called
                         _ => throw new InvalidOperationException()
-                    },
+                    }; SaveSettings(); },
                     Loader = () => doubleOnOverlap switch {
                         true => 0,
                         false => 1,
-                    } 
+                    }
                 }, //double on overlap
                 new IMenuMod.MenuEntry {
                     Name = "Random surprises",
@@ -360,12 +437,12 @@ namespace ButtplugMod
                         "On",
                         "Off"
                     },
-                    Saver = opt => randomSurprises = opt switch {
+                    Saver = opt => {randomSurprises = opt switch {
                         0 => true,
                         1 => false,
                         // This should never be called
                         _ => throw new InvalidOperationException()
-                    },
+                    }; SaveSettings(); },
                     Loader = () => randomSurprises switch {
                         true => 0,
                         false => 1,
@@ -378,12 +455,12 @@ namespace ButtplugMod
                         "On",
                         "Off"
                     },
-                    Saver = opt => vulnerableWhileVibing = opt switch {
+                    Saver = opt => {vulnerableWhileVibing = opt switch {
                         0 => true,
                         1 => false,
                         // This should never be called
                         _ => throw new InvalidOperationException()
-                    },
+                    }; SaveSettings(); },
                     Loader = () => vulnerableWhileVibing switch {
                         true => 0,
                         false => 1,
@@ -396,12 +473,12 @@ namespace ButtplugMod
                         "On",
                         "Off"
                     },
-                    Saver = opt => punctuateHits = opt switch {
+                    Saver = opt => {punctuateHits = opt switch {
                         0 => true,
                         1 => false,
                         // This should never be called
                         _ => throw new InvalidOperationException()
-                    },
+                    }; SaveSettings(); },
                     Loader = () => punctuateHits switch {
                         true => 0,
                         false => 1,
@@ -416,6 +493,7 @@ namespace ButtplugMod
             ModHooks.HeroUpdateHook -= OnHeroUpdate;
             ModHooks.BeforeAddHealthHook -= BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook -= OnHeroDamaged;
+            ModHooks.SoulGainHook -= OnSoulGain;
         }
     }
 }
