@@ -52,7 +52,7 @@ namespace ButtplugMod
         PlugManager plug;
 
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "v1.2.3";
+        public override string GetVersion() => "v1.2.4";
         void LoadSettings()
         {
             try
