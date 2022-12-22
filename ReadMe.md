@@ -37,12 +37,16 @@ If you have any issues installing, feel free to contact me for help. It should g
 
 ## Rules
 
-When you take damage, it will buzz at 50% power for 5 seconds. (Double damage hits are 100% power for 10 seconds)
+Options to cause a vibration whenever you take damage, heal, or gain soul;
 
-When you heal, it will buzz at 10% power for 1 second (this can be disabled). There's also an option to buzz on soul gain, effectively causing on-hit vibes.
+* Upon taking damage (default on), it will buzz at 50% power for 5 seconds. Double damage hits are 100% power for 10 seconds.
+* Upon healing (default on), it will buzz at 10% power for 1 second.
+* Upon gaining soul (default off), it will buzz at ~10% power for ~1 second (varies slightly depending on fill level and charm loadout). Doesn't matter if gauge is full.
 
 If one of the above triggers while it is still vibrating, the effect and duration will be **doubled**. This means that if you take a regular hit, then take another before the 5 seconds are up, you will have an additional 10 seconds at 100% power. 
 
-This can be customised in the mod, but I do recommend starting with the default settings. It's better for the default to be 50% rather than 100%, as that leaves room for it to get more intense should you take a heavy hit or multiple hits back to back. There's many customisation options in the mod, explore them for yourself!
+This can be customised in the mod, and settings save between sessions. It's better for the default to be 50% rather than 100%, as that leaves room for it to get more intense should you take a heavy hit or multiple hits back to back. There's many customisation options in the mod, explore them for yourself!
+
+Settings for intensity and duration are for the 'upon taking damage' trigger - others are about 1/5th of that (e.g. if you want 2 seconds of buzz on healing, set timer to 10 seconds).
 
 What am I doing with my life.
