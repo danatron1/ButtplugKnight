@@ -53,7 +53,7 @@ namespace ButtplugMod
         PlugManager plug;
 
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "v1.2.4";
+        public override string GetVersion() => "v1.2.5";
         void LoadSettings()
         {
             try
@@ -237,6 +237,11 @@ namespace ButtplugMod
             //calculate new power level
             float newPower = baseVibeRate * amount;
             if (vulnerable && !healTriggered) newPower /= 2; //vulnerable is only supposed to effect the game, not the vibe
+            if (!healTriggered && player.GetBool(nameof(player.overcharmed)))
+            {
+                newPower *= 2; //for some reason the game doesn't report double damage from overcharming?
+                message = "(overcharmed) " + message;
+            }
             if (doubleOnOverlap) newPower += currentPower;
             else if (newPower < currentPower) newPower = currentPower;
             newPower = Mathf.Clamp01(newPower);
