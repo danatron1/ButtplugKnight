@@ -1,4 +1,6 @@
-﻿using GoodVibes;
+﻿using ButtplugKnight;
+using GoodVibes;
+using MagicUI.Core;
 using Modding;
 using System;
 using System.Collections;
@@ -7,12 +9,13 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace ButtplugMod
 {
     public class ButtplugMod : Mod, IMenuMod, ITogglableMod
     {
+        private LayoutRoot? layout;
+
         internal static ButtplugMod Instance;
         static PlayerData player => PlayerData.instance;
 
@@ -30,13 +33,15 @@ namespace ButtplugMod
         private int buzzOnStrike = 0; //off, not when full, always
         private bool  punctuateHits = false;
         private bool  vulnerableWhileVibing = false;
+        //UI options
+        private bool  displayPercentage = false;
+        private bool  displayTimeRemaining = false;
 
         /*adding a new setting? Make sure to;
          *  add it to the menu options (ensuring you change the loader and saver)
          *  add it to the save settings method
          *  add it to the load settings method
          */
-
         bool vulnerable => vulnerableWhileVibing && vibing;
 
         static string hkData = "hollow_knight_Data";
@@ -52,8 +57,22 @@ namespace ButtplugMod
 
         PlugManager plug;
 
+        private void UpdateTextDisplay()
+        {
+            string text = "";
+            if (displayPercentage) text += $"{currentPower*100:f0}%\n";
+            if (displayTimeRemaining && vibing) text += $"{timeToReset:f1}";
+            try
+            {
+                VibeUI.textUI.Text = text;
+            }
+            catch (NullReferenceException e)
+            {
+                Log($"Text UI not properly initialised: {e.Message}");
+            }
+        }
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "v1.2.5";
+        public override string GetVersion() => "v1.2.6";
         void LoadSettings()
         {
             try
@@ -75,6 +94,8 @@ namespace ButtplugMod
                 buzzOnStrike = int.Parse(settings[nameof(buzzOnStrike)]);
                 punctuateHits = bool.Parse(settings[nameof(punctuateHits)]);
                 vulnerableWhileVibing = bool.Parse(settings[nameof(vulnerableWhileVibing)]);
+                displayPercentage = bool.Parse(settings[nameof(displayPercentage)]);
+                displayTimeRemaining = bool.Parse(settings[nameof(displayTimeRemaining)]);
             }
             catch (FileNotFoundException ex)
             {
@@ -100,7 +121,9 @@ namespace ButtplugMod
                     $"{nameof(buzzOnDamage)}={buzzOnDamage}",
                     $"{nameof(buzzOnStrike)}={buzzOnStrike}",
                     $"{nameof(punctuateHits)}={punctuateHits}",
-                    $"{nameof(vulnerableWhileVibing)}={vulnerableWhileVibing}"
+                    $"{nameof(vulnerableWhileVibing)}={vulnerableWhileVibing}",
+                    $"{nameof(displayPercentage)}={displayPercentage}",
+                    $"{nameof(displayTimeRemaining)}={displayTimeRemaining}"
                 };
                 File.WriteAllLines(settingsPath, settings.ToArray());
             }
@@ -112,15 +135,16 @@ namespace ButtplugMod
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             Log("Initializing");
+
             Instance = this;
             currentPower = 0;
             timeToReset = 1;
             punctuateTimer = 0;
 
-
             ModHooks.HeroUpdateHook += OnHeroUpdate;
             ModHooks.BeforeAddHealthHook += BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook += OnHeroDamaged;
+            On.HeroController.Awake += OnSaveOpened;
             ModHooks.SoulGainHook += OnSoulGain;
 
             Regex pattern = new(@"[hH]ollow[\s_][kK]night[\s_][dD]ata");
@@ -135,13 +159,27 @@ namespace ButtplugMod
             }
 
             LoadSettings();
-            Log("Initialized");
 
             if (!File.Exists(logPath)) File.Create(logPath).Close();
             else if (plug == null) File.WriteAllLines(logPath, new string[0]);
-
             if (plug == null) PlugSetup();
+
+            Log("Initialized");
         }
+
+        private void OnSaveOpened(On.HeroController.orig_Awake orig, HeroController self)
+        {
+            if (layout == null)
+            {
+                layout = new(true, "Persistent layout");
+                layout.RenderDebugLayoutBounds = false;
+
+                // comment out examples as needed to see only the specific ones you want
+                VibeUI.Setup(layout);
+            }
+            orig(self);
+        }
+
         private int OnSoulGain(int arg)
         {
             if (buzzOnStrike == 0) return arg;
@@ -180,6 +218,7 @@ namespace ButtplugMod
         static System.Random rng = new System.Random();
         private void OnHeroUpdate()
         {
+            if (displayPercentage || displayTimeRemaining) UpdateTextDisplay();
             if (randomSurprises && rng.Next(1, 1_000_000) == 69)
             {
                 timeToReset += 10;
@@ -489,7 +528,43 @@ namespace ButtplugMod
                         true => 0,
                         false => 1,
                     }
-                } //punctuate hits
+                }, //punctuate hits
+                new IMenuMod.MenuEntry {
+                    Name = "Display Intensity",
+                    Description = "Display the intensity percentage in the top right on the UI",
+                    Values = new string[] {
+                        "On",
+                        "Off"
+                    },
+                    Saver = opt => {displayPercentage = opt switch {
+                        0 => true,
+                        1 => false,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    }; SaveSettings(); },
+                    Loader = () => displayPercentage switch {
+                        true => 0,
+                        false => 1,
+                    }
+                }, //Display Intensity
+                new IMenuMod.MenuEntry {
+                    Name = "Display Timer",
+                    Description = "Display the amount of time left before the vibrator turns off",
+                    Values = new string[] {
+                        "On",
+                        "Off"
+                    },
+                    Saver = opt => {displayTimeRemaining = opt switch {
+                        0 => true,
+                        1 => false,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    }; SaveSettings(); },
+                    Loader = () => displayTimeRemaining switch {
+                        true => 0,
+                        false => 1,
+                    }
+                } //Display Intensity
                 //max line length |----------------------------------------------------------------|
             };
         }
@@ -500,6 +575,7 @@ namespace ButtplugMod
             ModHooks.BeforeAddHealthHook -= BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook -= OnHeroDamaged;
             ModHooks.SoulGainHook -= OnSoulGain;
+            On.HeroController.Awake -= OnSaveOpened;
         }
     }
 }

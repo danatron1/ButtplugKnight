@@ -49,10 +49,6 @@
     <Copy Condition="'$(DocumentationFile)' == ''" SourceFiles="ReadMe.md;$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
     
     <ZipDirectory SourceDirectory="$(ExportDir)/$(TargetName)/zip/" DestinationFile="$(ExportDir)/$(TargetName)/$(TargetName).zip" />
-    <!--
-    <Copy SourceFiles="$(ExportDir)\bin\Debug\$(TargetFramework)\MagicUI.dll" DestinationFolder="$(ExportDir)/$(TargetName)/zip/" />
-    <ZipDirectory SourceDirectory="$(ExportDir)/$(TargetName)/zip/" DestinationFile="$(ExportDir)/$(TargetName)/$(TargetName)WithMagicUI.zip" />
-    -->
     <RemoveDir Directories="$(ExportDir)/$(TargetName)/zip/" />
 
     <!--
@@ -80,6 +76,9 @@
     <Reference Include="Buttplug">
       <HintPath>$(HollowKnightRefs)/Mods/$(TargetName)/Buttplug.dll</HintPath>
     </Reference>
+    <Reference Include="MagicUI">
+      <HintPath>$(HollowKnightRefs)/Mods/$(TargetName)/MagicUI.dll</HintPath>
+    </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>$(HollowKnightRefs)/Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
@@ -91,9 +90,6 @@
     </Reference>
     <Reference Include="GalaxyCSharp">
       <HintPath>$(HollowKnightRefs)/GalaxyCSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="MagicUI">
-      <HintPath>$(HollowKnightRefs)\Mods\MagicUI\MagicUI.dll</HintPath>
     </Reference>
     <Reference Include="MMHOOK_Assembly-CSharp">
       <HintPath>$(HollowKnightRefs)/MMHOOK_Assembly-CSharp.dll</HintPath>
@@ -309,7 +305,7 @@
     <None Include="Resources\.gitignore" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Buttplug" Version="3.0.0" />
+    <PackageReference Include="Buttplug" Version="2.0.6" />
     <PackageReference Include="ButtplugRustFFI" Version="2.0.5" />
   </ItemGroup>
 </Project>
