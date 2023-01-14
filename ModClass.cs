@@ -60,7 +60,7 @@ namespace ButtplugMod
         private void UpdateTextDisplay()
         {
             string text = "";
-            if (displayPercentage) text += $"{currentPower*100:f0}%\n";
+            if (displayPercentage) text += $"{plug._currentPower*100:f0}%\n";
             if (displayTimeRemaining && vibing) text += $"{timeToReset:f1}";
             try
             {

@@ -27,7 +27,7 @@ namespace GoodVibes
         private ButtplugWebsocketConnectorOptions _connector;
         //private int _retries;
 
-        private float _currentPower = 0;
+        internal float _currentPower = 0;
 
         public ButtplugClient Client { get; private set; }
 
