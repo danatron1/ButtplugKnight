@@ -72,7 +72,7 @@ namespace ButtplugMod
             }
         }
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "v1.2.6";
+        public override string GetVersion() => "1.2.6";
         void LoadSettings()
         {
             try
@@ -138,7 +138,7 @@ namespace ButtplugMod
 
             Instance = this;
             currentPower = 0;
-            timeToReset = 1;
+            timeToReset = 0.09f;
             punctuateTimer = 0;
 
             ModHooks.HeroUpdateHook += OnHeroUpdate;
@@ -576,6 +576,7 @@ namespace ButtplugMod
             ModHooks.AfterTakeDamageHook -= OnHeroDamaged;
             ModHooks.SoulGainHook -= OnSoulGain;
             On.HeroController.Awake -= OnSaveOpened;
+            VibeUI.textUI.Text = string.Empty;
         }
     }
 }

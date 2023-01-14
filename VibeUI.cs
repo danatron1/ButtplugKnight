@@ -19,7 +19,7 @@ namespace ButtplugKnight
                 TextAlignment = HorizontalAlignment.Right,
                 FontSize = 40,
                 Font = UI.TrajanBold,
-                Text = ""
+                Text = string.Empty
             };
         }
     }
