@@ -19,11 +19,11 @@ namespace ButtplugMod
         internal static ButtplugMod Instance;
         static PlayerData player => PlayerData.instance;
 
-        const int port = 12345;
-        const int retryAttempts = 10;
+        private int port = 12345;
+        private int retryAttempts = 10;
 
         private int   secondsPerHit = 5;
-        private float baseVibeRate = 0.5f;
+        private float baseVibeRate = 0.2f;
 
         private bool  doubleOnOverlap = true;
         private bool  scaleWithDamage = true;
@@ -33,6 +33,7 @@ namespace ButtplugMod
         private int buzzOnStrike = 0; //off, not when full, always
         private bool  punctuateHits = false;
         private bool  vulnerableWhileVibing = false;
+        private bool rotationEnabled = true;
         //UI options
         private bool  displayPercentage = false;
         private bool  displayTimeRemaining = false;
@@ -76,7 +77,7 @@ namespace ButtplugMod
             }
         }
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "1.2.6";
+        public override string GetVersion() => "1.3";
         void LoadSettings()
         {
             try
@@ -100,6 +101,13 @@ namespace ButtplugMod
                 vulnerableWhileVibing = bool.Parse(settings[nameof(vulnerableWhileVibing)]);
                 displayPercentage = bool.Parse(settings[nameof(displayPercentage)]);
                 displayTimeRemaining = bool.Parse(settings[nameof(displayTimeRemaining)]);
+                rotationEnabled = bool.Parse(settings[nameof(rotationEnabled)]);
+
+                //Hidden settings
+                port = int.Parse(settings[nameof(port)]);
+                retryAttempts = int.Parse(settings[nameof(retryAttempts)]);
+
+                plug?.SetRotationEnabled(rotationEnabled);
             }
             catch (FileNotFoundException ex)
             {
@@ -127,9 +135,13 @@ namespace ButtplugMod
                     $"{nameof(punctuateHits)}={punctuateHits}",
                     $"{nameof(vulnerableWhileVibing)}={vulnerableWhileVibing}",
                     $"{nameof(displayPercentage)}={displayPercentage}",
-                    $"{nameof(displayTimeRemaining)}={displayTimeRemaining}"
+                    $"{nameof(displayTimeRemaining)}={displayTimeRemaining}",
+                    $"{nameof(rotationEnabled)}={rotationEnabled}",
+                    $"{nameof(port)}={port}",
+                    $"{nameof(retryAttempts)}={retryAttempts}"
                 };
                 File.WriteAllLines(settingsPath, settings.ToArray());
+                plug?.SetRotationEnabled(rotationEnabled);
             }
             catch (Exception ex)
             {
@@ -326,37 +338,43 @@ namespace ButtplugMod
                     Name = "Intensity",
                     Description = "The vibration level from 1 damage (50% recommended)",
                     Values = new string[] {
+                        "1%",
                         "5%",
                         "10%",
+                        "15%",
                         "20%",
-                        "30%",
-                        "40%",
+                        "25%",
+                        "33%",
                         "50%",
-                        "75%",
+                        "67%",
                         "100%"
                     },
                     Saver = opt => {baseVibeRate = opt switch {
-                        0 => 0.05f,
-                        1 => 0.1f,
-                        2 => 0.2f,
-                        3 => 0.3f,
-                        4 => 0.4f,
-                        5 => 0.5f,
-                        6 => 0.75f,
-                        7 => 1f,
+                        0 => 0.01f,
+                        1 => 0.05f,
+                        2 => 0.1f,
+                        3 => 0.15f,
+                        4 => 0.2f,
+                        5 => 0.25f,
+                        6 => 0.33f,
+                        7 => 0.5f,
+                        8 => 0.67f,
+                        9 => 1f,
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     }; SaveSettings(); },
                     Loader = () => baseVibeRate switch {
-                        0.05f => 0,
-                        0.1f => 1,
-                        0.2f => 2,
-                        0.3f => 3,
-                        0.4f => 4,
-                        0.5f => 5,
-                        0.75f => 6,
-                        1f => 7,
-                        _ => 5
+                        0.01f => 0,
+                        0.05f => 1,
+                        0.1f => 2,
+                        0.15f => 3,
+                        0.2f => 4,
+                        0.25f => 5,
+                        0.33f => 6,
+                        0.5f => 7,
+                        0.67f => 8,
+                        1f => 9,
+                        _ => 4
                     }
                 }, //Intensity
                 new IMenuMod.MenuEntry {
@@ -368,7 +386,12 @@ namespace ButtplugMod
                         "3",
                         "4",
                         "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
                         "10",
+                        "15",
                         "20",
                         "69"
                     },
@@ -378,9 +401,14 @@ namespace ButtplugMod
                         2 => 3,
                         3 => 4,
                         4 => 5,
-                        5 => 10,
-                        6 => 20,
-                        7 => 69,
+                        5 => 6,
+                        6 => 7,
+                        7 => 8,
+                        8 => 9,
+                        9 => 10,
+                        10 => 15,
+                        11 => 20,
+                        12 => 69,
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     }; SaveSettings(); },
@@ -390,9 +418,14 @@ namespace ButtplugMod
                         3 => 2,
                         4 => 3,
                         5 => 4,
-                        10 => 5,
-                        20 => 6,
-                        69 => 7,
+                        6 => 5,
+                        7 => 6,
+                        8 => 7,
+                        9 => 8,
+                        10 => 9,
+                        15 => 10,
+                        20 => 11,
+                        69 => 12,
                         _ => 4
                     }
                 }, //seconds per hit
@@ -568,7 +601,25 @@ namespace ButtplugMod
                         true => 0,
                         false => 1,
                     }
-                } //Display Intensity
+                }, //Display Timer
+                new IMenuMod.MenuEntry {
+                    Name = "Enable rotation",
+                    Description = "Toy also rotates on hit, for toys with rotation capabilities",
+                    Values = new string[] {
+                        "On",
+                        "Off"
+                    },
+                    Saver = opt => {rotationEnabled = opt switch {
+                        0 => true,
+                        1 => false,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    }; SaveSettings(); },
+                    Loader = () => rotationEnabled switch {
+                        true => 0,
+                        false => 1,
+                    }
+                } //Enable Rotation
                 //max line length |----------------------------------------------------------------|
             };
         }

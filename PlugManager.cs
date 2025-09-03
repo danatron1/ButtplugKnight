@@ -28,6 +28,7 @@ namespace GoodVibes
         //private int _retries;
 
         internal float _currentPower = 0;
+        internal bool RotationEnabled = false;
 
         public ButtplugClient Client { get; private set; }
 
@@ -130,12 +131,15 @@ namespace GoodVibes
             foreach (var plug in Client?.Devices)
             {
                 plug?.SendVibrateCmd(_currentPower);
-                try
-                { //try adding rotation
-                    plug?.SendRotateCmd(_currentPower, _clockwise);
-                    _clockwise = !_clockwise;
+                if (RotationEnabled)
+                {
+                    try
+                    { //try adding rotation
+                        plug?.SendRotateCmd(_currentPower, _clockwise);
+                        _clockwise = !_clockwise;
+                    }
+                    catch { }
                 }
-                catch { }
             }
         }
         private bool _clockwise = true;
@@ -197,6 +201,10 @@ namespace GoodVibes
             //if (level == _currentPower) return;
             _currentPower = Mathf.Clamp01(level);
             Task.Factory.StartNew(() => UpdatePowerLevels().FireAndForget(LogMessage));
+        }
+        public void SetRotationEnabled(bool enabled)
+        {
+            RotationEnabled = enabled;
         }
     }
 }
