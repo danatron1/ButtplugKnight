@@ -61,7 +61,11 @@ namespace ButtplugMod
         {
             string text = "";
             if (displayPercentage) text += $"{plug._currentPower*100:f0}%\n";
-            if (displayTimeRemaining && vibing) text += $"{timeToReset:f1}";
+            if (displayTimeRemaining && vibing)
+            {
+                if (timeToReset > 60) text += $"{(int)timeToReset / 60}:{timeToReset%60:00.0}";
+                else text += $"{timeToReset%60:f1}";
+            }
             try
             {
                 VibeUI.textUI.Text = text;

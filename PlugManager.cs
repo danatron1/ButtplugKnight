@@ -130,8 +130,15 @@ namespace GoodVibes
             foreach (var plug in Client?.Devices)
             {
                 plug?.SendVibrateCmd(_currentPower);
+                try
+                { //try adding rotation
+                    plug?.SendRotateCmd(_currentPower, _clockwise);
+                    _clockwise = !_clockwise;
+                }
+                catch { }
             }
         }
+        private bool _clockwise = true;
         private async Task<bool> TryScanning()
         {
             Log("Starting to scan for devices.");
