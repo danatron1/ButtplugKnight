@@ -1,6 +1,6 @@
 # Buttplug Knight
 
-For when you want to feel a little less hollow.
+A Hollow Knight mod for when you want to feel a little less hollow.
 
 ## Requirements
 
