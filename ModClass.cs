@@ -30,13 +30,13 @@ namespace ButtplugMod
         private bool  randomSurprises = true;
         private bool  buzzOnHeal = true;
         private bool  buzzOnDamage = true;
-        private int buzzOnStrike = 0; //off, not when full, always
-        private bool  punctuateHits = false;
+        private int   buzzOnStrike = 0; //off, not when full, always
+        private float punctuateHits = 0f;
         private bool  vulnerableWhileVibing = false;
-        private bool rotationEnabled = true;
+        private bool  rotationEnabled = true;
         //UI options
-        private bool  displayPercentage = false;
-        private bool  displayTimeRemaining = false;
+        private bool  displayPercentage = true;
+        private bool  displayTimeRemaining = true;
 
         /*adding a new setting? Make sure to;
          *  add it to the menu options (ensuring you change the loader and saver)
@@ -54,7 +54,7 @@ namespace ButtplugMod
 
         float currentPower;
         float timeToReset;
-        float punctuateTimer;
+        float punctuateTimerRemaining;
 
         PlugManager plug;
 
@@ -97,7 +97,7 @@ namespace ButtplugMod
                 buzzOnHeal = bool.Parse(settings[nameof(buzzOnHeal)]);
                 buzzOnDamage = bool.Parse(settings[nameof(buzzOnDamage)]);
                 buzzOnStrike = int.Parse(settings[nameof(buzzOnStrike)]);
-                punctuateHits = bool.Parse(settings[nameof(punctuateHits)]);
+                punctuateHits = float.Parse(settings[nameof(punctuateHits)]);
                 vulnerableWhileVibing = bool.Parse(settings[nameof(vulnerableWhileVibing)]);
                 displayPercentage = bool.Parse(settings[nameof(displayPercentage)]);
                 displayTimeRemaining = bool.Parse(settings[nameof(displayTimeRemaining)]);
@@ -155,7 +155,7 @@ namespace ButtplugMod
             Instance = this;
             currentPower = 0;
             timeToReset = 0.09f;
-            punctuateTimer = 0;
+            punctuateTimerRemaining = 0;
 
             ModHooks.HeroUpdateHook += OnHeroUpdate;
             ModHooks.BeforeAddHealthHook += BeforeHealthAdd;
@@ -241,10 +241,10 @@ namespace ButtplugMod
                 plug?.SetPowerLevel(1);
                 LogVibe("Random surprise triggered! Enjoy 10 seconds of max power :)");
             }
-            if (punctuateHits && punctuateTimer > 0)
+            if (punctuateHits > 0 && punctuateTimerRemaining > 0)
             {
-                punctuateTimer -= Time.deltaTime;
-                if (punctuateTimer <= 0 && currentPower < 1)
+                punctuateTimerRemaining -= Time.deltaTime;
+                if (punctuateTimerRemaining <= 0 && currentPower < 1)
                 {
                     plug?.SetPowerLevel(currentPower);
                 }
@@ -266,14 +266,14 @@ namespace ButtplugMod
             if (hazardType == 0) return damageAmount;
             if (vulnerable) damageAmount *= 2;
             DoGoodVibes(damageAmount);
-            if (punctuateHits)
+            if (punctuateHits > 0)
             {
                 if (currentPower < 1)
                 {
                     plug?.SetPowerLevel(1);
                     LogVibe("Hit punctuated by half a second of max power.");
                 }
-                punctuateTimer = 0.5f;
+                punctuateTimerRemaining = punctuateHits;
             }
             return damageAmount;
         }
@@ -323,7 +323,7 @@ namespace ButtplugMod
             currentPower = newPower;
             //if we're punctuating hits, we don't need to update the power here, as it'll be done after.
             //unless, of course, it's not caused by a hit (heal triggered) or it's already at 100%.
-            if (!punctuateHits || currentPower == 1 || healTriggered) plug?.SetPowerLevel(currentPower);
+            if (punctuateHits == 0 || currentPower == 1 || healTriggered) plug?.SetPowerLevel(currentPower);
         }
         public void LogVibe(string s) 
         {
@@ -336,7 +336,7 @@ namespace ButtplugMod
             {
                 new IMenuMod.MenuEntry {
                     Name = "Intensity",
-                    Description = "The vibration level from 1 damage (50% recommended)",
+                    Description = "The vibrator power increase for 1 damage (20% recommended)",
                     Values = new string[] {
                         "1%",
                         "5%",
@@ -550,20 +550,30 @@ namespace ButtplugMod
                 }, //Vulnerable when vibing
                 new IMenuMod.MenuEntry {
                     Name = "Punctuate hits",
-                    Description = "Hits cause half a second of max power vibe, followed by regular",
+                    Description = "Hits cause a short burst of max power vibe, followed by regular",
                     Values = new string[] {
-                        "On",
-                        "Off"
+                        "Off",
+                        "0.1s",
+                        "0.2s",
+                        "0.5s",
+                        "1s",
                     },
                     Saver = opt => {punctuateHits = opt switch {
-                        0 => true,
-                        1 => false,
+                        0 => 0f,
+                        1 => 0.1f,
+                        2 => 0.2f,
+                        3 => 0.5f,
+                        4 => 1f,
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     }; SaveSettings(); },
                     Loader = () => punctuateHits switch {
-                        true => 0,
-                        false => 1,
+                        0f => 0,
+                        0.1f => 1,
+                        0.2f => 2,
+                        0.5f => 3,
+                        1f => 4,
+                        _ => 0
                     }
                 }, //punctuate hits
                 new IMenuMod.MenuEntry {
