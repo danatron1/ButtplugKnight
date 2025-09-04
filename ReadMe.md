@@ -8,14 +8,14 @@ You will need:
 * A vibrating toy. (only tested with Lovense, should work with [many more](https://iostindex.com/?filter0ButtplugSupport=7))
 * (Optional with Lovense) A bluetooth dongle for your PC. (Bluetooth 4.0 [recommended](https://how.do.i.get.buttplug.in/hardware/bluetooth.html#can-i-use-a-bluetooth-5-dongle))
 * A copy of [Hollow Knight](https://store.steampowered.com/app/367520/Hollow_Knight/).
-* Hollow Knight's mod manager, [Scarab](https://github.com/fifty-six/Scarab/releases). (free)
+* A Hollow Knight mod manager, [Lumafly](https://github.com/TheMulhima/Lumafly/releases/tag/v3.3.0.0) or [Scarab](https://github.com/fifty-six/Scarab/releases). (free)
 * [Intiface Central](https://intiface.com/central/) installed and enabled. (free)
 
 If you have a bluetooth dongle but are unsure if it's compatible, install Intiface Central and scan for devices. If it can find your vibrator, it should work.
 
 ## To install
 
-SHORT VERSION: Install intiface central, hollow knight, and scarab. Install MagicUI through Scarab. Enable intiface and search for devices. Drag the ButtplugKnight folder into your mods folder.
+SHORT VERSION: Install intiface central, hollow knight, and the mod manager. Install MagicUI through the mod manager. Enable intiface and search for devices. Drag the ButtplugKnight folder into your mods folder.
 
 DETAILED VERSION:
 
@@ -25,7 +25,7 @@ Install Intiface Central using the above link. Turn on the server, go to devices
 
 * Alternatively; If you're using a Lovense, you don't need a bluetooth dongle; try using "Lovense Connect". Make sure Lovense Connect is enabled in the Intiface settings (it's off by default), and connect to your toy through that. This is recommended if you're moving around a lot, having trouble connecting, or don't own a Bluetooth Dongle.
 
-Install Hollow Knight if you haven't already. Install Scarab by downloading the file and running it, and once it's open, install **Magic UI**. You'll know it's working if your game has the spaghetti icon on the main menu and the mod list in the top left.
+Install Hollow Knight if you haven't already. Install lumafly by downloading the file and running it, and once it's open, install **Magic UI**. You'll know it's working if your game has the spaghetti icon on the main menu and the mod list in the top left.
 
 * This mod uses MagicUI to display the UI as of v1.2.6 - if you cannot install it for whatever reason, use v1.2.5.
 
