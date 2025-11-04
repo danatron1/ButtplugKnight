@@ -3,11 +3,9 @@ using GoodVibes;
 using MagicUI.Core;
 using Modding;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace ButtplugMod
@@ -21,6 +19,7 @@ namespace ButtplugMod
 
         private int port = 12345;
         private int retryAttempts = 10;
+        private float updateFrequency = 0.125f;
 
         private int   secondsPerHit = 5;
         private float baseVibeRate = 0.2f;
@@ -28,12 +27,14 @@ namespace ButtplugMod
         private bool  doubleOnOverlap = true;
         private bool  scaleWithDamage = true;
         private bool  randomSurprises = true;
-        private bool  buzzOnHeal = true;
+        private float buzzOnHeal = 0.25f;
         private bool  buzzOnDamage = true;
-        private int   buzzOnStrike = 0; //off, not when full, always
+        private float buzzOnStrike = 0f;
+        private int   buzzOnDeath = 0;
         private float punctuateHits = 0f;
         private bool  vulnerableWhileVibing = false;
         private bool  rotationEnabled = true;
+        private int   waveType = 0;
         //UI options
         private bool  displayPercentage = true;
         private bool  displayTimeRemaining = true;
@@ -55,13 +56,18 @@ namespace ButtplugMod
         float currentPower;
         float timeToReset;
         float punctuateTimerRemaining;
+        float lastUpdate;
 
         PlugManager plug;
 
         private void UpdateTextDisplay()
         {
             string text = "";
-            if (displayPercentage) text += $"{plug._currentPower*100:f0}%\n";
+            if (displayPercentage)
+            {
+                if (plug._currentPower != currentPower) text += $"({plug._currentPower * 100:f0}%) ";
+                text += $"{currentPower * 100:f0}%\n";
+            }
             if (displayTimeRemaining && vibing)
             {
                 if (timeToReset > 60) text += $"{(int)timeToReset / 60}:{timeToReset%60:00.0}";
@@ -77,7 +83,7 @@ namespace ButtplugMod
             }
         }
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "1.3";
+        public override string GetVersion() => "1.4";
         void LoadSettings()
         {
             try
@@ -94,18 +100,21 @@ namespace ButtplugMod
                 doubleOnOverlap = bool.Parse(settings[nameof(doubleOnOverlap)]);
                 scaleWithDamage = bool.Parse(settings[nameof(scaleWithDamage)]);
                 randomSurprises = bool.Parse(settings[nameof(randomSurprises)]);
-                buzzOnHeal = bool.Parse(settings[nameof(buzzOnHeal)]);
+                buzzOnHeal = float.Parse(settings[nameof(buzzOnHeal)]);
                 buzzOnDamage = bool.Parse(settings[nameof(buzzOnDamage)]);
-                buzzOnStrike = int.Parse(settings[nameof(buzzOnStrike)]);
+                buzzOnStrike = float.Parse(settings[nameof(buzzOnStrike)]);
+                buzzOnDeath = int.Parse(settings[nameof(buzzOnDeath)]);
                 punctuateHits = float.Parse(settings[nameof(punctuateHits)]);
                 vulnerableWhileVibing = bool.Parse(settings[nameof(vulnerableWhileVibing)]);
                 displayPercentage = bool.Parse(settings[nameof(displayPercentage)]);
                 displayTimeRemaining = bool.Parse(settings[nameof(displayTimeRemaining)]);
                 rotationEnabled = bool.Parse(settings[nameof(rotationEnabled)]);
+                waveType = int.Parse(settings[nameof(waveType)]);
 
                 //Hidden settings
                 port = int.Parse(settings[nameof(port)]);
                 retryAttempts = int.Parse(settings[nameof(retryAttempts)]);
+                updateFrequency = float.Parse(settings[nameof(updateFrequency)]);
 
                 plug?.SetRotationEnabled(rotationEnabled);
             }
@@ -132,13 +141,17 @@ namespace ButtplugMod
                     $"{nameof(buzzOnHeal)}={buzzOnHeal}",
                     $"{nameof(buzzOnDamage)}={buzzOnDamage}",
                     $"{nameof(buzzOnStrike)}={buzzOnStrike}",
+                    $"{nameof(buzzOnDeath)}={buzzOnDeath}",
                     $"{nameof(punctuateHits)}={punctuateHits}",
                     $"{nameof(vulnerableWhileVibing)}={vulnerableWhileVibing}",
                     $"{nameof(displayPercentage)}={displayPercentage}",
                     $"{nameof(displayTimeRemaining)}={displayTimeRemaining}",
                     $"{nameof(rotationEnabled)}={rotationEnabled}",
+                    $"{nameof(waveType)}={waveType}",
+
                     $"{nameof(port)}={port}",
-                    $"{nameof(retryAttempts)}={retryAttempts}"
+                    $"{nameof(retryAttempts)}={retryAttempts}",
+                    $"{nameof(updateFrequency)}={updateFrequency}"
                 };
                 File.WriteAllLines(settingsPath, settings.ToArray());
                 plug?.SetRotationEnabled(rotationEnabled);
@@ -161,7 +174,9 @@ namespace ButtplugMod
             ModHooks.BeforeAddHealthHook += BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook += OnHeroDamaged;
             On.HeroController.Awake += OnSaveOpened;
-            ModHooks.SoulGainHook += OnSoulGain;
+            ModHooks.SlashHitHook += OnStrike;
+            ModHooks.AfterPlayerDeadHook += OnDeath;
+            ModHooks.SetPlayerIntHook += OnCollectRelic;
 
             Regex pattern = new(@"[hH]ollow[\s_][kK]night[\s_][dD]ata");
             foreach (string directory in Directory.EnumerateDirectories(Environment.CurrentDirectory))
@@ -196,20 +211,52 @@ namespace ButtplugMod
             orig(self);
         }
 
-        private int OnSoulGain(int arg)
+        //EXPERIMENTAL - relic collection vibes for archipelago "support"
+        private int OnCollectRelic(string name, int orig)
         {
-            if (buzzOnStrike == 0) return arg;
-            if (buzzOnStrike == 1 && player.GetInt(nameof(player.MPCharge)) == player.GetInt(nameof(player.maxMP)))
+            switch (name)
             {
-                if (player.GetInt(nameof(player.MPReserve)) == player.GetInt(nameof(player.MPReserveMax))) return arg;
-                if (BossSequenceController.BoundSoul) return arg;
+                case "trinket1": //wanderer's journal - 200 geo
+                    VibeTrinket(1, 2); //20% for 2 seconds
+                    break;
+                case "trinket2": //hallownest seal - 450 geo
+                    VibeTrinket(2, 4.5f); //45% for 4.5 seconds
+                    break;
+                case "trinket3": //king's idol - 800 geo
+                    VibeTrinket(3, 8); //80% for 8 seconds
+                    break;
+                case "trinket4": //arcane egg - 1200 geo
+                    VibeTrinket(4, 12); //100% for 12 seconds
+                    break;
             }
-            DoGoodVibes(arg / 50f);
-            return arg;
+            return orig;
+
+            void VibeTrinket(int level, float seconds)
+            {
+                LogVibe($"Got trinket {level}, vibing for {seconds} seconds");
+                if (PlayerData.instance.GetInt($"trinket{level}") < orig)
+                {
+                    timeToReset += seconds;
+                    plug?.SetPowerLevel(Mathf.Max(currentPower, Mathf.Min(1, seconds / 10)));
+                    LogVibe($"Vibe activated for {seconds}");
+                }
+            }
+        }
+        private void OnDeath()
+        {
+            if (buzzOnDeath > 0)
+            {
+                timeToReset += buzzOnDeath;
+                plug?.SetPowerLevel(1);
+            }
+        }
+        private void OnStrike(Collider2D otherCollider, GameObject slash)
+        {
+            if (buzzOnStrike != 0) DoGoodVibes(buzzOnStrike);
         }
         private int BeforeHealthAdd(int arg)
         {
-            if (buzzOnHeal) DoGoodVibes(arg * 0.2f);
+            if (buzzOnHeal != 0) DoGoodVibes(arg * buzzOnHeal);
             return arg;
         }
 
@@ -246,19 +293,46 @@ namespace ButtplugMod
                 punctuateTimerRemaining -= Time.deltaTime;
                 if (punctuateTimerRemaining <= 0 && currentPower < 1)
                 {
-                    plug?.SetPowerLevel(currentPower);
+                    UpdateVibratorPower();
                 }
             }
             else if (vibing)
             {
                 timeToReset -= Time.deltaTime;
-                if (!vibing)
+                if (!vibing) TurnOffVibrator();
+                else if (waveType != 0 && lastUpdate - timeToReset > updateFrequency)
                 {
-                    plug?.SetPowerLevel(0);
-                    currentPower = 0;
-                    timeToReset = 0;
+                    UpdateVibratorPower();
                 }
             }
+        }
+        private void TurnOffVibrator()
+        {
+            plug?.SetPowerLevel(0);
+            currentPower = 0;
+            timeToReset = 0;
+            lastUpdate = 0;
+        }
+        private void UpdateVibratorPower()
+        {
+            plug?.SetPowerLevel(currentPower * GetWaveMultiplier());
+            lastUpdate = timeToReset;
+        }
+        float GetWaveMultiplier()
+        {
+            return waveType switch
+            {
+                //sine
+                1 => (Mathf.Sin(timeToReset * Mathf.PI) + 2) / 3,
+                //square
+                2 => (timeToReset % 1f) >= 0.5f ? 0f : 1f,
+                //triangle
+                3 => timeToReset % 1f,
+                //reverse triangle
+                4 => 1f - (timeToReset % 1f),
+                //no wave (default)
+                _ => 1f,
+            };
         }
         private int OnHeroDamaged(int hazardType, int damageAmount)
         {
@@ -271,7 +345,7 @@ namespace ButtplugMod
                 if (currentPower < 1)
                 {
                     plug?.SetPowerLevel(1);
-                    LogVibe("Hit punctuated by half a second of max power.");
+                    LogVibe($"Hit punctuated by {punctuateHits} seconds of max power.");
                 }
                 punctuateTimerRemaining = punctuateHits;
             }
@@ -323,7 +397,7 @@ namespace ButtplugMod
             currentPower = newPower;
             //if we're punctuating hits, we don't need to update the power here, as it'll be done after.
             //unless, of course, it's not caused by a hit (heal triggered) or it's already at 100%.
-            if (punctuateHits == 0 || currentPower == 1 || healTriggered) plug?.SetPowerLevel(currentPower);
+            if (punctuateHits == 0 || currentPower == 1 || healTriggered) UpdateVibratorPower();
         }
         public void LogVibe(string s) 
         {
@@ -379,7 +453,7 @@ namespace ButtplugMod
                 }, //Intensity
                 new IMenuMod.MenuEntry {
                     Name = "Seconds per hit",
-                    Description = "The vibration duration from 1 damage",
+                    Description = "The vibration duration from 1 damage (5-10 recommended)",
                     Values = new string[] {
                         "1",
                         "2",
@@ -448,34 +522,84 @@ namespace ButtplugMod
                     }
                 }, //buzz on damage
                 new IMenuMod.MenuEntry {
-                    Name = "Buzz when healing",
-                    Description = "Healing will cause a small short vibration",
+                    Name = "Buzz on heal",
+                    Description = "Healing will vibe equivalent to a fraction of a hit",
                     Values = new string[] {
-                        "On",
-                        "Off"
+                        "Off",
+                        "1/4",
+                        "1/2",
+                        "Full"
                     },
                     Saver = opt => {buzzOnHeal = opt switch {
-                        0 => true,
-                        1 => false,
+                        0 => 0f,
+                        1 => 0.25f,
+                        2 => 0.5f,
+                        3 => 1f,
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     }; SaveSettings(); },
                     Loader = () => buzzOnHeal switch {
-                        true => 0,
-                        false => 1,
+                        0f => 0,
+                        0.25f => 1,
+                        0.5f => 2,
+                        1f => 3,
+                        _ => 1
                     }
                 }, //buzz when healing
                 new IMenuMod.MenuEntry {
-                    Name = "Buzz on soul gain",
-                    Description = "Extracting white fluids from enemies will cause a small vibration",
+                    Name = "Buzz on strike",
+                    Description = "Nail strikes will vibe equivalent to a fraction of a hit",
                     Values = new string[] {
                         "Off",
-                        "Not when full",
-                        "Always" 
+                        "1/4",
+                        "1/2",
+                        "Full"
                     },
-                    Saver = opt => {buzzOnStrike = opt; SaveSettings(); },
-                    Loader = () => buzzOnStrike
+                    Saver = opt => {buzzOnStrike = opt switch {
+                        0 => 0f,
+                        1 => 0.25f,
+                        2 => 0.5f,
+                        3 => 1f,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    }; SaveSettings(); },
+                    Loader = () => buzzOnStrike switch {
+                        0f => 0,
+                        0.25f => 1,
+                        0.5f => 2,
+                        1f => 3,
+                        _ => 1
+                    }
                 }, //buzz on soul gain
+                new IMenuMod.MenuEntry {
+                    Name = "Buzz on death",
+                    Description = "On death, sets power to 100%, and adds a number of seconds",
+                    Values = new string[] {
+                        "Off",
+                        "1",
+                        "5",
+                        "10",
+                        "15",
+                        "20",
+                    },
+                    Saver = opt => {buzzOnDeath = opt switch {
+                        0 => 0,
+                        1 => 1,
+                        2 => 10,
+                        3 => 15,
+                        4 => 20,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    }; SaveSettings(); },
+                    Loader = () => buzzOnDeath switch {
+                        0 => 0,
+                        1 => 1,
+                        10 => 2,
+                        15 => 3,
+                        20 => 4,
+                        _ => 0
+                    }
+                }, //buzz on death
                 new IMenuMod.MenuEntry {
                     Name = "Scale with damage",
                     Description = "Heavier hits will cause longer vibrations",
@@ -613,6 +737,20 @@ namespace ButtplugMod
                     }
                 }, //Display Timer
                 new IMenuMod.MenuEntry {
+                    Name = "Oscillate",
+                    Description = "Vibes in a wave pattern instead of staying at max power",
+                    Values = new string[] {
+                        "Off",
+                        "Sine",
+                        "Square",
+                        "Triangle",
+                        "Triangle2"
+                    },
+                    Saver = opt => { waveType = opt;
+                        SaveSettings(); },
+                    Loader = () => waveType
+                }, //Enable Oscillation
+                new IMenuMod.MenuEntry {
                     Name = "Enable rotation",
                     Description = "Toy also rotates on hit, for toys with rotation capabilities",
                     Values = new string[] {
@@ -639,7 +777,7 @@ namespace ButtplugMod
             ModHooks.HeroUpdateHook -= OnHeroUpdate;
             ModHooks.BeforeAddHealthHook -= BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook -= OnHeroDamaged;
-            ModHooks.SoulGainHook -= OnSoulGain;
+            ModHooks.SlashHitHook += OnStrike;
             On.HeroController.Awake -= OnSaveOpened;
             VibeUI.textUI.Text = string.Empty;
         }
