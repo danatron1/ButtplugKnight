@@ -253,20 +253,21 @@ namespace ButtplugMod
             if (buzzOnDeath > 0 && repeatTriggerLock == 0)
             {
                 timeToReset += buzzOnDeath;
-                currentPower = 1;
-                UpdateVibratorPower();
+                UpdateVibratorPower(1);
                 repeatTriggerLock = 2;
                 LogVibe($"Died! Vibing for +{buzzOnDeath} seconds ({timeToReset})");
             }
         }
-        private void OnStrike(Collider2D otherCollider, GameObject slash) //DEPRECIATED (for now)
+        /* DEPRECIATED (for now)
+        
+        private void OnStrike(Collider2D otherCollider, GameObject slash) 
         {
             if (buzzOnStrike != 0)
             {
                 LogVibe($"Nail hit {slash.name} {slash.GetInstanceID()} on {otherCollider.name} {otherCollider.GetInstanceID()}");
                 DoGoodVibes(buzzOnStrike);
             }
-        }
+        }*/
         private int OnSoulGain(int arg)
         {
             if (buzzOnStrike == 0) return arg;
