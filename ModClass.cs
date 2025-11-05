@@ -24,6 +24,7 @@ namespace ButtplugMod
         private int   secondsPerHit = 5;
         private float baseVibeRate = 0.2f;
 
+        private bool  buzzOnRelics = false;
         private bool  doubleOnOverlap = true;
         private bool  scaleWithDamage = true;
         private bool  randomSurprises = true;
@@ -38,6 +39,8 @@ namespace ButtplugMod
         //UI options
         private bool  displayPercentage = true;
         private bool  displayTimeRemaining = true;
+
+        private float repeatTriggerLock = 0;
 
         /*adding a new setting? Make sure to;
          *  add it to the menu options (ensuring you change the loader and saver)
@@ -110,6 +113,7 @@ namespace ButtplugMod
                 displayTimeRemaining = bool.Parse(settings[nameof(displayTimeRemaining)]);
                 rotationEnabled = bool.Parse(settings[nameof(rotationEnabled)]);
                 waveType = int.Parse(settings[nameof(waveType)]);
+                buzzOnRelics = bool.Parse(settings[nameof(buzzOnRelics)]);
 
                 //Hidden settings
                 port = int.Parse(settings[nameof(port)]);
@@ -148,6 +152,7 @@ namespace ButtplugMod
                     $"{nameof(displayTimeRemaining)}={displayTimeRemaining}",
                     $"{nameof(rotationEnabled)}={rotationEnabled}",
                     $"{nameof(waveType)}={waveType}",
+                    $"{nameof(buzzOnRelics)}={buzzOnRelics}",
 
                     $"{nameof(port)}={port}",
                     $"{nameof(retryAttempts)}={retryAttempts}",
@@ -174,7 +179,7 @@ namespace ButtplugMod
             ModHooks.BeforeAddHealthHook += BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook += OnHeroDamaged;
             On.HeroController.Awake += OnSaveOpened;
-            ModHooks.SlashHitHook += OnStrike;
+            ModHooks.SoulGainHook += OnSoulGain;
             ModHooks.AfterPlayerDeadHook += OnDeath;
             ModHooks.SetPlayerIntHook += OnCollectRelic;
 
@@ -214,6 +219,7 @@ namespace ButtplugMod
         //EXPERIMENTAL - relic collection vibes for archipelago "support"
         private int OnCollectRelic(string name, int orig)
         {
+            if (!buzzOnRelics) return orig;
             switch (name)
             {
                 case "trinket1": //wanderer's journal - 200 geo
@@ -237,22 +243,35 @@ namespace ButtplugMod
                 if (PlayerData.instance.GetInt($"trinket{level}") < orig)
                 {
                     timeToReset += seconds;
-                    plug?.SetPowerLevel(Mathf.Max(currentPower, Mathf.Min(1, seconds / 10)));
+                    UpdateVibratorPower(Mathf.Min(1, currentPower + (seconds / 10)));
                     LogVibe($"Vibe activated for {seconds}");
                 }
             }
         }
         private void OnDeath()
         {
-            if (buzzOnDeath > 0)
+            if (buzzOnDeath > 0 && repeatTriggerLock == 0)
             {
                 timeToReset += buzzOnDeath;
-                plug?.SetPowerLevel(1);
+                currentPower = 1;
+                UpdateVibratorPower();
+                repeatTriggerLock = 2;
+                LogVibe($"Died! Vibing for +{buzzOnDeath} seconds ({timeToReset})");
             }
         }
-        private void OnStrike(Collider2D otherCollider, GameObject slash)
+        private void OnStrike(Collider2D otherCollider, GameObject slash) //DEPRECIATED (for now)
         {
-            if (buzzOnStrike != 0) DoGoodVibes(buzzOnStrike);
+            if (buzzOnStrike != 0)
+            {
+                LogVibe($"Nail hit {slash.name} {slash.GetInstanceID()} on {otherCollider.name} {otherCollider.GetInstanceID()}");
+                DoGoodVibes(buzzOnStrike);
+            }
+        }
+        private int OnSoulGain(int arg)
+        {
+            if (buzzOnStrike == 0) return arg;
+            DoGoodVibes(arg * buzzOnStrike);
+            return arg;
         }
         private int BeforeHealthAdd(int arg)
         {
@@ -285,7 +304,7 @@ namespace ButtplugMod
             if (randomSurprises && rng.Next(1, 1_000_000) == 69)
             {
                 timeToReset += 10;
-                plug?.SetPowerLevel(1);
+                UpdateVibratorPower(1);
                 LogVibe("Random surprise triggered! Enjoy 10 seconds of max power :)");
             }
             if (punctuateHits > 0 && punctuateTimerRemaining > 0)
@@ -305,6 +324,11 @@ namespace ButtplugMod
                     UpdateVibratorPower();
                 }
             }
+            if (repeatTriggerLock > 0)
+            {
+                repeatTriggerLock -= Time.deltaTime;
+                if (repeatTriggerLock < 0) repeatTriggerLock = 0;
+            }
         }
         private void TurnOffVibrator()
         {
@@ -313,8 +337,9 @@ namespace ButtplugMod
             timeToReset = 0;
             lastUpdate = 0;
         }
-        private void UpdateVibratorPower()
+        private void UpdateVibratorPower(float? level = null)
         {
+            if (level is not null) currentPower = level.Value;
             plug?.SetPowerLevel(currentPower * GetWaveMultiplier());
             lastUpdate = timeToReset;
         }
@@ -547,8 +572,8 @@ namespace ButtplugMod
                     }
                 }, //buzz when healing
                 new IMenuMod.MenuEntry {
-                    Name = "Buzz on strike",
-                    Description = "Nail strikes will vibe equivalent to a fraction of a hit",
+                    Name = "Buzz on soul gain",
+                    Description = "Extracting white fluids from enemies will cause a vibration",
                     Values = new string[] {
                         "Off",
                         "1/4",
@@ -581,25 +606,48 @@ namespace ButtplugMod
                         "10",
                         "15",
                         "20",
+                        "60",
                     },
                     Saver = opt => {buzzOnDeath = opt switch {
                         0 => 0,
                         1 => 1,
-                        2 => 10,
-                        3 => 15,
-                        4 => 20,
+                        2 => 5,
+                        3 => 10,
+                        4 => 15,
+                        5 => 20,
+                        6 => 60,
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     }; SaveSettings(); },
                     Loader = () => buzzOnDeath switch {
                         0 => 0,
                         1 => 1,
-                        10 => 2,
-                        15 => 3,
-                        20 => 4,
+                        5 => 2,
+                        10 => 3,
+                        15 => 4,
+                        20 => 5,
+                        60 => 6,
                         _ => 0
                     }
                 }, //buzz on death
+                new IMenuMod.MenuEntry {
+                    Name = "Buzz on relics",
+                    Description = "Vibes upon picking up a relic. Meant for use with Archipelago",
+                    Values = new string[] {
+                        "Off",
+                        "On",
+                    },
+                    Saver = opt => {buzzOnRelics = opt switch {
+                        0 => false,
+                        1 => true,
+                        // This should never be called
+                        _ => throw new InvalidOperationException()
+                    }; SaveSettings(); },
+                    Loader = () => buzzOnRelics switch {
+                        false => 0,
+                        true => 1,
+                    }
+                }, //buzz on relic
                 new IMenuMod.MenuEntry {
                     Name = "Scale with damage",
                     Description = "Heavier hits will cause longer vibrations",
@@ -773,7 +821,7 @@ namespace ButtplugMod
         }
         public void Unload()
         {
-            plug?.SetPowerLevel(0);
+            TurnOffVibrator();
             ModHooks.HeroUpdateHook -= OnHeroUpdate;
             ModHooks.BeforeAddHealthHook -= BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook -= OnHeroDamaged;
