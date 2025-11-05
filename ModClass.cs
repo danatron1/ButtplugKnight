@@ -86,7 +86,7 @@ namespace ButtplugMod
             }
         }
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "1.4";
+        public override string GetVersion() => "1.4.1";
         void LoadSettings()
         {
             try
@@ -826,7 +826,7 @@ namespace ButtplugMod
             ModHooks.HeroUpdateHook -= OnHeroUpdate;
             ModHooks.BeforeAddHealthHook -= BeforeHealthAdd;
             ModHooks.AfterTakeDamageHook -= OnHeroDamaged;
-            ModHooks.SlashHitHook += OnStrike;
+            ModHooks.SoulGainHook -= OnSoulGain;
             On.HeroController.Awake -= OnSaveOpened;
             VibeUI.textUI.Text = string.Empty;
         }
