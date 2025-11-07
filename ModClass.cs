@@ -60,31 +60,8 @@ namespace ButtplugMod
         float lastUpdate;
 
         PlugManager plug;
-
-        private void UpdateTextDisplay()
-        {
-            string text = "";
-            if (displayPercentage)
-            {
-                if (plug._currentPower != currentPower) text += $"({plug._currentPower * 100:f0}%) ";
-                text += $"{currentPower * 100:f0}%\n";
-            }
-            if (displayTimeRemaining && vibing)
-            {
-                if (timeToReset > 60) text += $"{(int)timeToReset / 60}:{timeToReset%60:00.0}";
-                else text += $"{timeToReset%60:f1}";
-            }
-            try
-            {
-                VibeUI.textUI.Text = text;
-            }
-            catch (NullReferenceException e)
-            {
-                Log($"Text UI not properly initialised: {e.Message}");
-            }
-        }
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "1.4.1";
+        public override string GetVersion() => "1.4.2";
         void LoadSettings()
         {
             try
@@ -226,8 +203,28 @@ namespace ButtplugMod
             }
             orig(self);
         }
-
-        //EXPERIMENTAL - relic collection vibes for archipelago "support"
+        private void UpdateTextDisplay()
+        {
+            string text = "";
+            if (displayPercentage)
+            {
+                if (plug._currentPower != currentPower) text += $"({plug._currentPower * 100:f0}%) ";
+                text += $"{currentPower * 100:f0}%\n";
+            }
+            if (displayTimeRemaining && vibing)
+            {
+                if (timeToReset > 60) text += $"{(int)timeToReset / 60}:{timeToReset % 60:00.0}";
+                else text += $"{timeToReset % 60:f1}";
+            }
+            try
+            {
+                VibeUI.textUI.Text = text;
+            }
+            catch (NullReferenceException e)
+            {
+                Log($"Text UI not properly initialised: {e.Message}");
+            }
+        }
         private int OnCollectRelic(string name, int orig)
         {
             if (buzzOnRelics == 0) return orig;
