@@ -24,7 +24,7 @@ namespace ButtplugMod
         private int   secondsPerHit = 5;
         private float baseVibeRate = 0.2f;
 
-        private bool  buzzOnRelics = false;
+        private int   buzzOnRelics = 0;
         private bool  doubleOnOverlap = true;
         private bool  scaleWithDamage = true;
         private bool  randomSurprises = true;
@@ -39,8 +39,6 @@ namespace ButtplugMod
         //UI options
         private bool  displayPercentage = true;
         private bool  displayTimeRemaining = true;
-
-        private float repeatTriggerLock = 0;
 
         /*adding a new setting? Make sure to;
          *  add it to the menu options (ensuring you change the loader and saver)
@@ -113,7 +111,7 @@ namespace ButtplugMod
                 displayTimeRemaining = bool.Parse(settings[nameof(displayTimeRemaining)]);
                 rotationEnabled = bool.Parse(settings[nameof(rotationEnabled)]);
                 waveType = int.Parse(settings[nameof(waveType)]);
-                buzzOnRelics = bool.Parse(settings[nameof(buzzOnRelics)]);
+                buzzOnRelics = int.Parse(settings[nameof(buzzOnRelics)]);
 
                 //Hidden settings
                 port = int.Parse(settings[nameof(port)]);
@@ -165,6 +163,19 @@ namespace ButtplugMod
             {
                 Log($"Failed to save settings. {ex.GetType()}; {ex.Message}");
             }
+        }
+        public void Unload()
+        {
+            TurnOffVibrator();
+            ModHooks.HeroUpdateHook -= OnHeroUpdate;
+            ModHooks.BeforeAddHealthHook -= BeforeHealthAdd;
+            ModHooks.AfterTakeDamageHook -= OnHeroDamaged;
+            On.HeroController.Awake -= OnSaveOpened;
+            ModHooks.SoulGainHook -= OnSoulGain;
+            ModHooks.AfterPlayerDeadHook -= OnDeath;
+            ModHooks.SetPlayerIntHook -= OnCollectRelic;
+
+            VibeUI.textUI.Text = string.Empty;
         }
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
@@ -219,30 +230,30 @@ namespace ButtplugMod
         //EXPERIMENTAL - relic collection vibes for archipelago "support"
         private int OnCollectRelic(string name, int orig)
         {
-            if (!buzzOnRelics) return orig;
+            if (buzzOnRelics == 0) return orig;
             switch (name)
             {
                 case "trinket1": //wanderer's journal - 200 geo
-                    VibeTrinket(1, 2); //20% for 2 seconds
+                    VibeTrinket(2); //20% for 2 seconds
                     break;
                 case "trinket2": //hallownest seal - 450 geo
-                    VibeTrinket(2, 4.5f); //45% for 4.5 seconds
+                    VibeTrinket(4.5f); //45% for 4.5 seconds
                     break;
                 case "trinket3": //king's idol - 800 geo
-                    VibeTrinket(3, 8); //80% for 8 seconds
+                    VibeTrinket(8); //80% for 8 seconds
                     break;
                 case "trinket4": //arcane egg - 1200 geo
-                    VibeTrinket(4, 12); //100% for 12 seconds
+                    VibeTrinket(12); //100% for 12 seconds
                     break;
             }
             return orig;
 
-            void VibeTrinket(int level, float seconds)
+            void VibeTrinket(float seconds)
             {
-                LogVibe($"Got trinket {level}, vibing for {seconds} seconds");
-                if (PlayerData.instance.GetInt($"trinket{level}") < orig)
+                LogVibe($"Got {name}, vibing for {seconds} seconds");
+                if (PlayerData.instance.GetInt(name) < orig)
                 {
-                    timeToReset += seconds;
+                    timeToReset += seconds * buzzOnRelics;
                     UpdateVibratorPower(Mathf.Min(1, currentPower + (seconds / 10)));
                     LogVibe($"Vibe activated for {seconds}");
                 }
@@ -250,11 +261,10 @@ namespace ButtplugMod
         }
         private void OnDeath()
         {
-            if (buzzOnDeath > 0 && repeatTriggerLock == 0)
+            if (buzzOnDeath > 0)
             {
                 timeToReset += buzzOnDeath;
                 UpdateVibratorPower(1);
-                repeatTriggerLock = 2;
                 LogVibe($"Died! Vibing for +{buzzOnDeath} seconds ({timeToReset})");
             }
         }
@@ -324,11 +334,6 @@ namespace ButtplugMod
                 {
                     UpdateVibratorPower();
                 }
-            }
-            if (repeatTriggerLock > 0)
-            {
-                repeatTriggerLock -= Time.deltaTime;
-                if (repeatTriggerLock < 0) repeatTriggerLock = 0;
             }
         }
         private void TurnOffVibrator()
@@ -637,16 +642,23 @@ namespace ButtplugMod
                     Values = new string[] {
                         "Off",
                         "On",
+                        "2x",
+                        "4x"
                     },
                     Saver = opt => {buzzOnRelics = opt switch {
-                        0 => false,
-                        1 => true,
+                        0 => 0,
+                        1 => 1,
+                        2 => 2,
+                        3 => 4,
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     }; SaveSettings(); },
                     Loader = () => buzzOnRelics switch {
-                        false => 0,
-                        true => 1,
+                        0 => 0,
+                        1 => 1,
+                        2 => 2,
+                        4 => 3,
+                        _ => 0
                     }
                 }, //buzz on relic
                 new IMenuMod.MenuEntry {
@@ -819,16 +831,6 @@ namespace ButtplugMod
                 } //Enable Rotation
                 //max line length |----------------------------------------------------------------|
             };
-        }
-        public void Unload()
-        {
-            TurnOffVibrator();
-            ModHooks.HeroUpdateHook -= OnHeroUpdate;
-            ModHooks.BeforeAddHealthHook -= BeforeHealthAdd;
-            ModHooks.AfterTakeDamageHook -= OnHeroDamaged;
-            ModHooks.SoulGainHook -= OnSoulGain;
-            On.HeroController.Awake -= OnSaveOpened;
-            VibeUI.textUI.Text = string.Empty;
         }
     }
 }
