@@ -50,16 +50,46 @@ If you have any issues installing, feel free to contact me for help. It should g
 * Ensure the mod appears on the mod list in the top right when you open hollow knight, and is enabled in the mod settings.
 * If you're still having issues, please contact me - tell me which "ensure" you weren't able to do, and provide me with the VibeLog.txt file (in the mod folder) if possible.
 
-## Rules
+## Settings explanation
 
-Options to cause a vibration whenever you take damage, heal, or gain soul;
+There are various ways this mod can work, with options to buzz upon taking damage, healing, dealing damage, and more. Everything is fully customisable.
+By default, it is set up to punish taking damage with distracting vibrations. This is the main purpose of the mod.
 
-* Upon taking damage (default on), it will buzz at 20% power for 5 seconds. Double damage hits are 40% power for 10 seconds. These are adjustable.
-* Upon healing (default on), it will buzz equivalent to 1/5th of a hit.
-* Upon gaining soul (default off), it will buzz equivalent to roughly 1/5th of a hit (varies slightly depending on fill level and charm loadout). Can be set to not go off when your soul gauge is full, or always.
+* Upon taking damage, it will buzz at 20% power for 5 seconds. Both of these settings are adjustable.
+* Upon healing, it will give a smaller buzz. The amount/duration are relative to taking damage. By default, it will buzz equivalent to 1/4 of a hit.
 
-If one of the above triggers while it is still vibrating, the effect and duration will be **doubled**. This means that if you take a regular hit and it activates for 5 seconds, then take another hit before that time's up, you will have an additional 10 seconds. The power stacks too, so if the first hit was 20%, the second will set it to 40%.
+Other modes include:  
+* Buzz upon gaining soul; It will buzz for a duration equivalent to a fraction of a hit. This depends on soul gain, so varies slightly depending on charm loadout.
+* Buzz upon death; If enabled, dying will immediately set the vibrator to 100% for a number of seconds. This will add time to the existing vibrator timer, which will likely be active. I give the option of 1 second for if you're only interested in the "set to 100%" feature.
+* Buzz upon relic pickup; If enabled, vibrates when you pick up a relic. Intended for Archipelago (see below).
 
-This can be customised in the mod, and settings save between sessions. It's better for the default to be lower, rather than 100%, as that leaves room for it to get more intense should you take multiple hits back to back. There's many customisation options in the mod, explore them for yourself!
+Other settings:  
+* Double on overlap; If one of the above triggers while it is still vibrating, the effect and duration will be combined, and added duration **doubled**. This means that if you take a regular hit and it activates for 5 seconds, then take another hit before that time's up, you will have an additional 10 seconds. The power stacks too, so if the first hit was 20%, the second will set it to 40%, then 60%, and so on. Default on, and recommended.
+* Scale with damage; If a regular hit activates at 20% for 5 seconds, a double-damage hit will activate at 40% for 10 seconds. Default on, and recommended.
+* Random surprises; Every frame has a minuscule chance of just turning the vibrator on maximum for 10 seconds. Leave this setting on. You will forget about it.
+* Vulnerable vibing; If you take damage while your vibrator is active, the damage you take is doubled. Adds extra challenge! Default off.
+* Punctuate hits; Not feeling the punch? Accentuates damage taken by setting the vibrator to 100% for a fraction of a second before continuing the regular vibes.
+* Display intensity/timer; If you like the unknown or are feeling daring, you can turn these off and nobody will even know you have this mod installed... if you can keep a straight face. (I take no responsibility for any banned twitch accounts that come out of this)
+* Oscillate; If the vibrator staying on is too boring for you, you have the option to activate the vibrator in a *wave pattern*. These oscillate between off and your current vibe level.
+  * Sine wave - smoothly goes up and down every second.
+  * Square wave - alternate off/on every second.
+  * Triangle wave - vibes decrease to zero before resetting every second.
+  * Triangle wave 2 - vibes instead increase from zero before resetting every second.
+* Rotation; If your toy can rotate, turn this on and it will activate rotations alongside vibrations (experimental - I lack the hardware to test this).
+
+Settings save between sessions. I would recommend setting the default power to something lower, rather than 100%, as that leaves room for it to get more intense should you take multiple hits back to back. There's many customisation options in the mod, explore them for yourself!
+
+## Archipelago
+
+This mod also has pseudo [Archipelago](https://archipelago.gg/) support, in a "Buzz upon relic pickup" option.  
+* When enabled, it buzzes when picking up the relics you can sell to [Lemm](https://hollowknight.wiki/w/Relic_Seeker_Lemm#Goods), with greater vibrations for the more valuable ones.  
+* The intent is for this to be played with [Hollow Knight's Archipelago mod](https://archipelago.gg/games/Hollow%20Knight/info/en). Archipelago is a multi-game randomizer, with relics functioning like "traps" other players can send to you, potentially giving you a vibe jumpscare.  
+* The relics you can find throughout Hollow Knight are:  
+  * 14 Wanderer's Journals: Worth 200 geo each. Vibes at 20% for 2 seconds.
+  * 17 Hallownest Seals: Worth 450 geo each. Vibes at 45% for 4.5 seconds.
+  * 8 King's Idols: Worth 800 geo each. Vibes at 80% for 8 seconds.
+  * 4 Arcane Eggs: Worth 1200 geo each. Vibes at 100% for 12 seconds.
+ 
+Whenever another player in your Archipelago room finishes their game, it will automatically release every item they missed. This will likely mean sending several uncollected relics to you at once. In extreme cases, this can potentially give you over a minute of 100% power. In other words, make sure everyone is thoroughly exploring their games before releasing, else you might release too!
 
 What am I doing with my life.
