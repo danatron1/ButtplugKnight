@@ -61,7 +61,7 @@ namespace ButtplugMod
 
         PlugManager plug;
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "1.4.2";
+        public override string GetVersion() => "1.4.3";
         void LoadSettings()
         {
             try
@@ -99,11 +99,11 @@ namespace ButtplugMod
             }
             catch (FileNotFoundException ex)
             {
-                Log("No settings file found; using default settings.");
+                LogVibe("No settings file found; using default settings.");
             }
             catch (Exception ex)
             {
-                Log($"Failed to load settings. {ex.GetType()}; {ex.Message}");
+                LogVibe($"Failed to load settings. {ex.GetType()}; {ex.Message}");
             }
         }
         void SaveSettings()
@@ -138,7 +138,7 @@ namespace ButtplugMod
             }
             catch (Exception ex)
             {
-                Log($"Failed to save settings. {ex.GetType()}; {ex.Message}");
+                LogVibe($"Failed to save settings. {ex.GetType()}; {ex.Message}");
             }
         }
         public void Unload()
@@ -156,7 +156,7 @@ namespace ButtplugMod
         }
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
-            Log("Initializing");
+            LogVibe("Initializing");
 
             Instance = this;
             currentPower = 0;
@@ -188,7 +188,7 @@ namespace ButtplugMod
             else if (plug == null) File.WriteAllLines(logPath, new string[0]);
             if (plug == null) PlugSetup();
 
-            Log("Initialized");
+            LogVibe($"Initialized - {GetName()} {GetVersion()}");
         }
 
         private void OnSaveOpened(On.HeroController.orig_Awake orig, HeroController self)
@@ -222,7 +222,7 @@ namespace ButtplugMod
             }
             catch (NullReferenceException e)
             {
-                Log($"Text UI not properly initialised: {e.Message}");
+                LogVibe($"Text UI not properly initialised: {e.Message}");
             }
         }
         private int OnCollectRelic(string name, int orig)
@@ -298,11 +298,11 @@ namespace ButtplugMod
                 };
                 plug.LogMessage += LogVibe;
                 await plug.Initialize();
-                Log($"Plug initialized, logging to {logPath}");
+                LogVibe($"Plug initialized, logging to {logPath}");
             }
             catch (Exception e)
             {
-                Log($"Failed to initialize vibrator - {e.GetType()}: {e.Message}");
+                LogVibe($"Failed to initialize vibrator - {e.GetType()}: {e.Message}");
             }
         }
         static System.Random rng = new System.Random();
@@ -388,8 +388,8 @@ namespace ButtplugMod
             {
                 if (!scaleWithDamage) amount = 1; //scale it to 1 if we're not doing that
                 else if (!vulnerable || amount > 2) message = "(heavy) "; //else mark it as a heavy hit
-                //you always take 2x damage while vulnerable.
-                //A heavy hit is defined by one that's normally 2+ damage.
+                                                                            //you always take 2x damage while vulnerable.
+                                                                            //A heavy hit is defined by one that's normally 2+ damage.
             }
             //calculate new power level
             float newPower = baseVibeRate * amount;
@@ -420,8 +420,8 @@ namespace ButtplugMod
             }
             float seconds = secondsPerHit * amount;
             timeToReset += seconds;
-            LogVibe($"{message}. Vibing at {100*newPower}% for {seconds} seconds. {timeToReset:f1}s left.");
-            if (currentPower == newPower) return;
+            lastUpdate += seconds;
+            LogVibe($"{message}. Vibing at {100 * newPower}% for {seconds} seconds. {timeToReset:f1}s left.");
             currentPower = newPower;
             //if we're punctuating hits, we don't need to update the power here, as it'll be done after.
             //unless, of course, it's not caused by a hit (heal triggered) or it's already at 100%.
@@ -609,7 +609,7 @@ namespace ButtplugMod
                         "10",
                         "15",
                         "20",
-                        "60",
+                        "69",
                     },
                     Saver = opt => {buzzOnDeath = opt switch {
                         0 => 0,
@@ -618,7 +618,7 @@ namespace ButtplugMod
                         3 => 10,
                         4 => 15,
                         5 => 20,
-                        6 => 60,
+                        6 => 69,
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     }; SaveSettings(); },
@@ -629,7 +629,7 @@ namespace ButtplugMod
                         10 => 3,
                         15 => 4,
                         20 => 5,
-                        60 => 6,
+                        69 => 6,
                         _ => 0
                     }
                 }, //buzz on death
