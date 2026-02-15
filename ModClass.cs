@@ -455,7 +455,7 @@ namespace ButtplugMod
                         "25%",
                         "33%",
                         "50%",
-                        "67%",
+                        "69%",
                         "100%"
                     },
                     Saver = opt => {baseVibeRate = opt switch {
@@ -467,7 +467,7 @@ namespace ButtplugMod
                         5 => 0.25f,
                         6 => 0.33f,
                         7 => 0.5f,
-                        8 => 0.67f,
+                        8 => 0.69f,
                         9 => 1f,
                         // This should never be called
                         _ => throw new InvalidOperationException()
@@ -481,7 +481,7 @@ namespace ButtplugMod
                         0.25f => 5,
                         0.33f => 6,
                         0.5f => 7,
-                        0.67f => 8,
+                        0.69f => 8,
                         1f => 9,
                         _ => 4
                     }
