@@ -358,7 +358,7 @@ namespace ButtplugMod
                 //square
                 3 => (timeToReset % 1f) >= 0.5f ? 0f : 1f,
                 //square2
-                4 => ((timeToReset % 1f) > currentPower ? 0f : 1f) / currentPower,
+                4 => (timeToReset % 1f) > currentPower ? 0f : 1f,
                 //triangle
                 5 => timeToReset % 1f,
                 //reverse triangle
