@@ -48,6 +48,7 @@ Some things have updated that may break this mod, mainly:
 
 If it's still not working, try the usual debugging steps:
 
+* Ensure you're using Hollow Knight version 1.5.78 or earlier
 * Ensure VPNs are turned off.
 * Ensure the vibrator is turned on. (and seeking a connection if applicable)
 * If using lovense connect, ensure it's connected in the app before even looking at your PC.
