@@ -61,7 +61,7 @@ namespace ButtplugMod
 
         PlugManager plug;
         new public string GetName() => "Buttplug Knight";
-        public override string GetVersion() => "1.4.3";
+        public override string GetVersion() => "1.4.4";
         void LoadSettings()
         {
             try
@@ -343,24 +343,31 @@ namespace ButtplugMod
         private void UpdateVibratorPower(float? level = null)
         {
             if (level is not null) currentPower = level.Value;
-            plug?.SetPowerLevel(currentPower * GetWaveMultiplier());
+            plug?.SetPowerLevel(GetWaveMultiplier());
             lastUpdate = timeToReset;
         }
         float GetWaveMultiplier()
         {
-            return waveType switch
+            currentPower = Mathf.Clamp01(currentPower);
+            float multiplier = waveType switch
             {
                 //sine
                 1 => (Mathf.Sin(timeToReset * Mathf.PI) + 2) / 3,
+                //sine2
+                2 => Mathf.Sin(timeToReset * (Mathf.PI / 2)) * currentPower + currentPower,
                 //square
-                2 => (timeToReset % 1f) >= 0.5f ? 0f : 1f,
+                3 => (timeToReset % 1f) >= 0.5f ? 0f : 1f,
+                //square2
+                4 => ((timeToReset % 1f) > currentPower ? 0f : 1f) / currentPower,
                 //triangle
-                3 => timeToReset % 1f,
+                5 => timeToReset % 1f,
                 //reverse triangle
-                4 => 1f - (timeToReset % 1f),
+                6 => 1f - (timeToReset % 1f),
                 //no wave (default)
                 _ => 1f,
             };
+            if (waveType == 2 || waveType == 4) return Mathf.Clamp01(multiplier); //these two don't need multiplying.
+            return Mathf.Clamp01(currentPower * multiplier);
         }
         private int OnHeroDamaged(int hazardType, int damageAmount)
         {
@@ -640,13 +647,15 @@ namespace ButtplugMod
                         "Off",
                         "On",
                         "2x",
-                        "4x"
+                        "4x",
+                        "8x",
                     },
                     Saver = opt => {buzzOnRelics = opt switch {
                         0 => 0,
                         1 => 1,
                         2 => 2,
                         3 => 4,
+                        4 => 8,
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     }; SaveSettings(); },
@@ -655,6 +664,7 @@ namespace ButtplugMod
                         1 => 1,
                         2 => 2,
                         4 => 3,
+                        8 => 4,
                         _ => 0
                     }
                 }, //buzz on relic
@@ -735,27 +745,36 @@ namespace ButtplugMod
                     Description = "Hits cause a short burst of max power vibe, followed by regular",
                     Values = new string[] {
                         "Off",
-                        "0.1s",
                         "0.2s",
+                        "0.3s",
+                        "0.4s",
                         "0.5s",
+                        "0.6s",
+                        "0.8s",
                         "1s",
                     },
                     Saver = opt => {punctuateHits = opt switch {
                         0 => 0f,
-                        1 => 0.1f,
-                        2 => 0.2f,
-                        3 => 0.5f,
-                        4 => 1f,
+                        1 => 0.2f,
+                        2 => 0.3f,
+                        3 => 0.4f,
+                        4 => 0.5f,
+                        5 => 0.6f,
+                        6 => 0.8f,
+                        7 => 1f,
                         // This should never be called
                         _ => throw new InvalidOperationException()
                     }; SaveSettings(); },
                     Loader = () => punctuateHits switch {
                         0f => 0,
-                        0.1f => 1,
-                        0.2f => 2,
-                        0.5f => 3,
-                        1f => 4,
-                        _ => 0
+                        0.2f => 1,
+                        0.3f => 2,
+                        0.4f => 3,
+                        0.5f => 4,
+                        0.6f => 5,
+                        0.8f => 6,
+                        1f => 7,
+                        _ => 3
                     }
                 }, //punctuate hits
                 new IMenuMod.MenuEntry {
@@ -800,7 +819,9 @@ namespace ButtplugMod
                     Values = new string[] {
                         "Off",
                         "Sine",
+                        "Sine2",
                         "Square",
+                        "Square2",
                         "Triangle",
                         "Triangle2"
                     },
