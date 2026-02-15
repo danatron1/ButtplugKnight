@@ -41,17 +41,10 @@ If you have any issues installing, feel free to contact me for help. It should g
 
 ## Debugging
 
-Some things have updated that may break this mod, mainly:
-
-* Lovense Connect is no longer being supported. Blame Lovense. As an alternative, use repeater mode.
-* Hollow Knight updated, which broke some mods. Until I get around to fixing it, downpatch to version 1.5.78.
-
-If it's still not working, try the usual debugging steps:
-
-* Ensure you're using Hollow Knight version 1.5.78 or earlier
+* Downpatch to Hollow Knight version 1.5.78 or earlier
 * Ensure VPNs are turned off.
 * Ensure the vibrator is turned on. (and seeking a connection if applicable)
-* If using lovense connect, ensure it's connected in the app before even looking at your PC.
+* If using lovense connect, stop! Use Intiface Central on mobile or a bluetooth dongle instead (see Requirements section for details).
 * Ensure the port number in Intiface Central is correct, it's set to Engine mode, and check other settings in the app (e.g. lovense connect)
 * Ensure you've started the server and clicked Start Scanning.
 * Ensure your vibrator appears in Intiface Central (and can be turned on via the slider) before opening Hollow Knight.
